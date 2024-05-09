@@ -1306,25 +1306,25 @@ describe("RockOnyxStableCoinVault", function () {
   });
 
   // https://arbiscan.io/address/0x55c4c840F9Ac2e62eFa3f12BaBa1B57A1208B6F5
-  it.skip("deposit error", async function () {
-    console.log(
-      "-------------deposit error 0x55c4c840F9Ac2e62eFa3f12BaBa1B57A1208B6F5---------------"
-    );
-    rockOnyxUSDTVaultContract = await ethers.getContractAt(
-      "RockOnyxUSDTVault",
-      "0x55c4c840F9Ac2e62eFa3f12BaBa1B57A1208B6F5"
-    );
+  // it("deposit error", async function () {
+  //   console.log(
+  //     "-------------deposit error 0x55c4c840F9Ac2e62eFa3f12BaBa1B57A1208B6F5---------------"
+  //   );
+  //   rockOnyxUSDTVaultContract = await ethers.getContractAt(
+  //     "RockOnyxUSDTVault",
+  //     "0x55c4c840F9Ac2e62eFa3f12BaBa1B57A1208B6F5"
+  //   );
 
-    console.log("-------------deposit time 1: 50$---------------");
+  //   console.log("-------------deposit time 1: 50$---------------");
 
-    await usdc
-      .connect(user1)
-      .approve(await rockOnyxUSDTVaultContract.getAddress(), 50 * 1e6);
+  //   await usdc
+  //     .connect(user1)
+  //     .approve(await rockOnyxUSDTVaultContract.getAddress(), 50 * 1e6);
 
-    console.log(
-      "rockOnyxUSDTVaultContract address: ",
-      await rockOnyxUSDTVaultContract.getAddress()
-    );
-    await rockOnyxUSDTVaultContract.connect(user1).deposit(50 * 1e6);
-  });
+  //   console.log(
+  //     "rockOnyxUSDTVaultContract address: ",
+  //     await rockOnyxUSDTVaultContract.getAddress()
+  //   );
+  //   await rockOnyxUSDTVaultContract.connect(user1).deposit(50 * 1e6);
+  // });
 });
