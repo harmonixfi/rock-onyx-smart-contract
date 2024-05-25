@@ -94,4 +94,11 @@ contract RenzoZircuitRestakingStrategy is BaseRestakingStrategy {
 
         renzoWithdrawRestakingPool = IWithdrawRestakingPool(_renzoWithdrawRestakingPoolAddress);
     }
+
+    function updateRestakingPoolAddresses(address[] memory _restakingPoolAddresses) external nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+
+        renzoRestakeProxy = IRenzoRestakeProxy(_restakingPoolAddresses[0]);
+        zircuitRestakeProxy = IZircuitRestakeProxy(_restakingPoolAddresses[1]);
+    }
 }

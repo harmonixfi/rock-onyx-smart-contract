@@ -96,4 +96,11 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
 
         kelpWithdrawRestakingPool = IWithdrawRestakingPool(_kelpWithdrawRestakingPoolAddress);
     }
+
+    function updateRestakingPoolAddresses(address[] memory _restakingPoolAddresses) external nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+
+        kelpRestakeProxy = IKelpRestakeProxy(_restakingPoolAddresses[0]);
+        zircuitRestakeProxy = IZircuitRestakeProxy(_restakingPoolAddresses[1]);
+    }
 }
