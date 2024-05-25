@@ -20,7 +20,7 @@ import {
   USDCE_USDC_PRICE_FEED_ADDRESS,
   USDT_PRICE_FEED_ADDRESS,
   DAI_PRICE_FEED_ADDRESS,
-  ARB_PRICE_FEED_ADDRESS
+  ARB_PRICE_FEED_ADDRESS,
 } from "../constants";
 
 const chainId: CHAINID = network.config.chainId as CHAINID;
@@ -28,39 +28,97 @@ const chainId: CHAINID = network.config.chainId as CHAINID;
 let deployer: Signer;
 let contract: Contracts.PriceConsumer;
 
-const wethAddress = WETH_ADDRESS[chainId] ?? '';
-const wstethAddress = WSTETH_ADDRESS[chainId] ?? '';
+const wethAddress = WETH_ADDRESS[chainId] ?? "";
+const wstethAddress = WSTETH_ADDRESS[chainId] ?? "";
 const ezEthAddress = EZETH_ADDRESS[chainId] || "";
 const rsEthAddress = RSETH_ADDRESS[chainId] || "";
-const usdceAddress = USDCE_ADDRESS[chainId] ?? '';
-const usdcAddress = USDC_ADDRESS[chainId] ?? '';
-const arbAddress = ARB_ADDRESS[chainId] ?? '';
+const usdceAddress = USDCE_ADDRESS[chainId] ?? "";
+const usdcAddress = USDC_ADDRESS[chainId] ?? "";
+const arbAddress = ARB_ADDRESS[chainId] ?? "";
 const usdtAddress = USDT_ADDRESS[chainId] || "";
 const daiAddress = DAI_ADDRESS[chainId] || "";
 
-const ethPriceFeed = ETH_PRICE_FEED_ADDRESS[chainId] ?? '';
-const steth_ethPriceFeed = WSTETH_ETH_PRICE_FEED_ADDRESS[chainId] ?? '';
-const usdcePriceFeed = USDCE_USDC_PRICE_FEED_ADDRESS[chainId] ?? '';
-const arbPriceFeed = ARB_PRICE_FEED_ADDRESS[chainId] ?? '';
-const ezEth_EthPriceFeed = EZETH_ETH_PRICE_FEED_ADDRESS[chainId] ?? '';
-const rsEth_EthPriceFeed = RSETH_ETH_PRICE_FEED_ADDRESS[chainId] ?? '';
-const usdtPriceFeed = USDT_PRICE_FEED_ADDRESS[chainId] ?? '';
-const daiPriceFeed = DAI_PRICE_FEED_ADDRESS[chainId] ?? '';
+const ethPriceFeed = ETH_PRICE_FEED_ADDRESS[chainId] ?? "";
+const steth_ethPriceFeed = WSTETH_ETH_PRICE_FEED_ADDRESS[chainId] ?? "";
+const usdcePriceFeed = USDCE_USDC_PRICE_FEED_ADDRESS[chainId] ?? "";
+const arbPriceFeed = ARB_PRICE_FEED_ADDRESS[chainId] ?? "";
+const ezEth_EthPriceFeed = EZETH_ETH_PRICE_FEED_ADDRESS[chainId] ?? "";
+const rsEth_EthPriceFeed = RSETH_ETH_PRICE_FEED_ADDRESS[chainId] ?? "";
+const usdtPriceFeed = USDT_PRICE_FEED_ADDRESS[chainId] ?? "";
+const daiPriceFeed = DAI_PRICE_FEED_ADDRESS[chainId] ?? "";
 
 async function deployPriceConsumerContract() {
-    const factory = await ethers.getContractFactory("PriceConsumer");
-    contract = await factory.deploy(
-      [wethAddress, wstethAddress, usdceAddress, arbAddress, ezEthAddress, rsEthAddress, usdtAddress, daiAddress],
-      [usdcAddress, wethAddress, usdcAddress, usdcAddress, wethAddress, wethAddress, usdcAddress, usdtAddress],
-      [ethPriceFeed, steth_ethPriceFeed, usdcePriceFeed, arbPriceFeed, ezEth_EthPriceFeed, rsEth_EthPriceFeed, usdtPriceFeed, daiPriceFeed]
-    );
-    await contract.waitForDeployment();
-
-    console.log(
-      "Deployed price consumer contract at address %s",
-      await contract.getAddress()
-    );
+  const factory = await ethers.getContractFactory("PriceConsumer");
+  let arr1, arr2, arr3;
+  if (chainId == CHAINID.ARBITRUM_MAINNET) {
+    arr1 = [
+      wethAddress,
+      wstethAddress,
+      usdceAddress,
+      arbAddress,
+      ezEthAddress,
+      rsEthAddress,
+      usdtAddress,
+      daiAddress,
+    ];
+    arr2 = [
+      usdcAddress,
+      wethAddress,
+      usdcAddress,
+      usdcAddress,
+      wethAddress,
+      wethAddress,
+      usdcAddress,
+      usdtAddress,
+    ];
+    arr3 = [
+      ethPriceFeed,
+      steth_ethPriceFeed,
+      usdcePriceFeed,
+      arbPriceFeed,
+      ezEth_EthPriceFeed,
+      rsEth_EthPriceFeed,
+      usdtPriceFeed,
+      daiPriceFeed,
+    ];
+  } else if (chainId == CHAINID.ETH_MAINNET) {
+    arr1 = [
+      wethAddress,
+      wstethAddress,
+      ezEthAddress,
+      rsEthAddress,
+      usdtAddress,
+      daiAddress,
+    ];
+    arr2 = [
+      usdcAddress,
+      wethAddress,
+      wethAddress,
+      wethAddress,
+      usdcAddress,
+      usdtAddress,
+    ];
+    arr3 = [
+      ethPriceFeed,
+      steth_ethPriceFeed,
+      ezEth_EthPriceFeed,
+      rsEth_EthPriceFeed,
+      usdtPriceFeed,
+      daiPriceFeed,
+    ];
+  } else {
+    console.log("CHAIN is not supported");
+    return;
   }
+
+  contract = await factory.deploy(arr1, arr2, arr3);
+  await contract.waitForDeployment();
+
+  console.log(
+    "Deployed price consumer contract at address %s",
+    await contract.getAddress()
+  );
+}
 async function main() {
   [deployer] = await ethers.getSigners();
   console.log(

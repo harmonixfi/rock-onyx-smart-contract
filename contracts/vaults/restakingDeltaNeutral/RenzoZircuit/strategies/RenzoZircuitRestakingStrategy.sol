@@ -45,10 +45,10 @@ contract RenzoZircuitRestakingStrategy is BaseRestakingStrategy {
             IWETH(address(ethToken)).withdraw(ethAmount);
 
             // arbitrum
-            renzoRestakeProxy.depositETH{value: ethAmount}(0, block.timestamp + 10 seconds);
+            // renzoRestakeProxy.depositETH{value: ethAmount}(0, block.timestamp + 10 seconds);
 
             // ethereum
-            // renzoRestakeProxy.depositETH{value: ethAmount}();
+            renzoRestakeProxy.depositETH{value: ethAmount}();
         }else{
             ethToken.approve(address(swapProxy), ethAmount);
             swapProxy.swapTo(
