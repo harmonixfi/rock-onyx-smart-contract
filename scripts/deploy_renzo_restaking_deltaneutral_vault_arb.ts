@@ -19,7 +19,11 @@ import * as Contracts from "../typechain-types";
 const chainId: CHAINID = network.config.chainId ?? 0;
 console.log("chainId ",chainId);
 
-const aevoRecipientAddress = "0xF4aF6504462E5D574EDBdB161F1063633CCa0274";
+
+/** TEST */
+// ether mainnet wallet
+const aevoRecipientAddress = "0xc32eE4798BA7D190C96EAF6cab4000f602801334";
+
 const usdcAddress = USDC_ADDRESS[chainId] || "";
 const usdtAddress = USDT_ADDRESS[chainId] || "";
 const daiAddress = DAI_ADDRESS[chainId] || "";
