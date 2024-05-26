@@ -28,11 +28,16 @@ contract RockOnyxAccessControl is AccessControl {
         require(hasRole(_role, msg.sender), errors[_role]);
     }
 
+    function grantRole(bytes32 role, address account) public virtual override onlyRole(ROCK_ONYX_ADMIN_ROLE) {
+        _grantRole(role, account);
+    }
+
+    function revokeRole(bytes32 role, address account) public virtual override onlyRole(ROCK_ONYX_ADMIN_ROLE) {
+        _revokeRole(role, account);
+    }
+
     function setPaused(bool _paused) external {
-        require(
-            hasRole(ROCK_ONYX_ADMIN_ROLE, msg.sender),
-            errors[ROCK_ONYX_ADMIN_ROLE]
-        );
+        _auth(ROCK_ONYX_ADMIN_ROLE);
 
         paused = _paused;
     }

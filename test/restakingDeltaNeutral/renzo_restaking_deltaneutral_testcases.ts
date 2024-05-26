@@ -174,6 +174,48 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     await transferForUser(dai, daiSigner, user2, BigInt(100000 * 1e18));
   });
 
+  it("test rock onyx access contral", async function () {
+    const ROCK_ONYX_ADMIN_ROLE = "0xdf7ae06225b060fdb3477e253632ba0fef61b138e661391f47b795efaa9c6388";
+    const grantRoleTx = await renzoRestakingDNVault
+    .connect(admin)
+    .grantRole(ROCK_ONYX_ADMIN_ROLE, user2);
+    await grantRoleTx.wait();
+
+    let hasRoleTx = await renzoRestakingDNVault
+    .connect(admin)
+    .hasRole(ROCK_ONYX_ADMIN_ROLE, user2);
+    
+    console.log("hasRoleTx %s", hasRoleTx);
+    expect(hasRoleTx).to.equals(true);
+
+    const revokeRoleTx = await renzoRestakingDNVault
+    .connect(user2)
+    .revokeRole(ROCK_ONYX_ADMIN_ROLE, admin);
+    await revokeRoleTx.wait();
+
+    hasRoleTx = await renzoRestakingDNVault
+    .connect(user2)
+    .hasRole(ROCK_ONYX_ADMIN_ROLE, admin);    
+    expect(hasRoleTx).to.equals(false);
+
+    await deposit(user1, 10 * 1e6, usdc, usdc);
+    await deposit(user2, 100 * 1e6, usdc, usdc);
+
+    let totalValueLock = await logAndReturnTotalValueLock();
+    expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
+
+    console.log("-------------deposit to vendor on aevo---------------");
+    if(chainId == CHAINID.ETH_MAINNET){
+      await expect(
+        renzoRestakingDNVault.connect(admin).depositToVendor(500000)).to.be.revertedWith('ROCK_ONYX_ADMIN_ROLE_ERROR');
+    }else{
+      await expect(
+        renzoRestakingDNVault.connect(admin).depositToVendorL2(650000, { 
+          value: ethers.parseEther("0.000159539385325246")
+        })).to.be.revertedWith('ROCK_ONYX_ADMIN_ROLE_ERROR');
+    }
+  });
+
   it.skip("user deposit -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
