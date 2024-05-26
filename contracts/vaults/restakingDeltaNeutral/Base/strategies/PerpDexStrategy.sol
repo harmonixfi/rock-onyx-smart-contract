@@ -137,7 +137,7 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuard {
      * @dev Calculates the total options amount based on allocated and unallocated balances.
      * @return The total options amount.
      */
-    function getTotalPerpDexAssets() internal view returns (uint256) {
+    function getTotalPerpDexTvl() internal view returns (uint256) {
         return perpDexState.unAllocatedBalance + perpDexState.perpDexBalance;
     }
 

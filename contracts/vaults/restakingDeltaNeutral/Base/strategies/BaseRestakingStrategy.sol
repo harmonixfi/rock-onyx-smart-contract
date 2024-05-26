@@ -115,6 +115,8 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
      * @return The unallocated balance in the Ethereum Stake & Lend strategy.
      */
     function getEthStakingState() external view returns (EthRestakingState memory) {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+        
         return restakingStratState;
     }
 }
