@@ -65,27 +65,6 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuard {
         emit PerpDexVendorDeposited(amount);
     }
 
-    function depositToVendorL2(uint32 gasLimit) external payable nonReentrant {
-        _auth(ROCK_ONYX_ADMIN_ROLE);
-        
-        bytes memory data = "";
-        uint256 amount = perpDexState.unAllocatedBalance;
-        perpDexState.unAllocatedBalance -= amount;
-        IERC20(perpDexAsset).approve(address(AEVO), amount);
-
-        AEVO.depositToAppChain{value: msg.value}(
-            perpDexReceiver,
-            perpDexAsset,
-            amount,
-            gasLimit,
-            perpDexConnector,
-            data
-        );
-
-        perpDexState.perpDexBalance += amount;
-        emit PerpDexVendorDeposited(amount);
-    }
-
     function syncPerpDexBalance(uint256 balance) internal {
         _auth(ROCK_ONYX_ADMIN_ROLE);
 

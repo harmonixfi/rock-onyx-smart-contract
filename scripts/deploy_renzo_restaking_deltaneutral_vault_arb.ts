@@ -19,10 +19,7 @@ import * as Contracts from "../typechain-types";
 const chainId: CHAINID = network.config.chainId ?? 0;
 console.log("chainId ",chainId);
 
-
-/** TEST */
-// ether mainnet wallet
-const aevoRecipientAddress = "0xc32eE4798BA7D190C96EAF6cab4000f602801334";
+const aevoRecipientAddress = "0xC438754927A5A10185Eb20980c3F2eA3eb5E0f09";
 
 const usdcAddress = USDC_ADDRESS[chainId] || "";
 const usdtAddress = USDT_ADDRESS[chainId] || "";
@@ -71,8 +68,9 @@ async function main() {
     "Deploying contracts with the account:",
     await deployer.getAddress()
   );
-
-  // MAINNET 
+    console.log("chain id ", chainId);
+  
+    // MAINNET 
   await deployRenzoRestakingDeltaNeutralVault();
 }
 

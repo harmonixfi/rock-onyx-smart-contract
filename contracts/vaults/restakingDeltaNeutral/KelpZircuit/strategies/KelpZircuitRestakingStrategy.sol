@@ -48,7 +48,6 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
 
             // arbitrum
             // kelpRestakeProxy.swapToRsETH{value: ethAmount}(0, refId);
-
             // ethereum
             kelpRestakeProxy.depositETH{value: ethAmount}(0, refId);
         }else{
@@ -69,7 +68,6 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
     }
 
     function withdrawFromRestakingProxy(uint256 ethAmount) internal override {
-        
         uint256 stakingTokenAmount = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
         
         if(address(zircuitRestakeProxy) != address(0)){
