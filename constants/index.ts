@@ -205,4 +205,9 @@ export const UNI_SWAP_ADDRESS: { [key in CHAINID]?: string } = {
   [CHAINID.ARBITRUM_MAINNET]: "0xbb08a05fE1c647E7e469eb79A87f3d3362719610",
 };
 
+export const NETWORK_COST: { [key in CHAINID]?: string } = {
+  [CHAINID.ETH_MAINNET]: "5",
+  [CHAINID.ARBITRUM_MAINNET]: "1",
+};
+
 

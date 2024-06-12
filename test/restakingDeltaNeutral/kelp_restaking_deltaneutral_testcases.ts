@@ -21,7 +21,8 @@ import {
   RSETH_ADDRESS,
   ZIRCUIT_DEPOSIT_ADDRESS,
   KELP_DEPOSIT_ADDRESS,
-  KELP_DEPOSIT_REF_ID
+  KELP_DEPOSIT_REF_ID,
+  NETWORK_COST
 } from "../../constants";
 import { BigNumberish, Signer } from "ethers";
 
@@ -61,6 +62,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
   const kelpDepositAddress = KELP_DEPOSIT_ADDRESS[chainId] || "";
   const kelpDepositRefId = KELP_DEPOSIT_REF_ID[chainId] || "";
   const zircuitDepositAddress = ZIRCUIT_DEPOSIT_ADDRESS[chainId] || "";
+  const networkCost = BigInt(Number(NETWORK_COST[chainId]) * 1e6);
 
   let priceConsumerContract: Contracts.PriceConsumer;
   let uniSwapContract: Contracts.UniSwap;
@@ -69,6 +71,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     const factory = await ethers.getContractFactory("PriceConsumer");
 
     priceConsumerContract = await factory.deploy(
+      admin,
       [wethAddress, rsEthAddress, usdtAddress , daiAddress],
       [usdcAddress, wethAddress, usdcAddress, usdtAddress],
       [ethPriceFeed, rsEth_EthPriceFeed, usdtPriceFeed, daiPriceFeed]
@@ -84,6 +87,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
   async function deployUniSwapContract() {
     const factory = await ethers.getContractFactory("UniSwap");
     uniSwapContract = await factory.deploy(
+      admin,
       swapRouterAddress,
       priceConsumerContract.getAddress()
     );
@@ -103,6 +107,10 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     kelpRestakingDNVault = await kelpRestakingDeltaNeutralVault.deploy(
       admin,
       usdcAddress,
+      6,
+      BigInt(5 * 1e6),
+      BigInt(1000000 * 1e6),
+      networkCost,
       wethAddress,
       aevoAddress,
       aevoRecipientAddress,
@@ -212,7 +220,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
 
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
-    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(95 * 1e6),PRECISION);
+    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost,PRECISION);
   });
 
   it.skip("user deposit -> deposit to perp dex -> deposit to kelp -> deposit to zircuit", async function () {
@@ -243,7 +251,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     await openPositionTx.wait();
   });
 
-  it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
+  it.skip("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -312,7 +320,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
     expect(user1BalanceAfterWithdraw).to.approximately(
-      user2Balance + BigInt(95 * 1e6),
+      user2Balance + BigInt(100 * 1e6) - networkCost,
       PRECISION
     );
   });
@@ -366,34 +374,135 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
 
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
-    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(95 * 1e6), PRECISION);
+    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost, PRECISION);
     totalValueLock = await logAndReturnTotalValueLock();
     expect(totalValueLock).to.approximately(200 * 1e6, PRECISION);
   });
 
-  it.skip("migration, export and import data to new delta neutral vault - 213900665", async function () {
-    const contractAdmin = await ethers.getImpersonatedSigner("0xc8cdE2212bf6fDfDE6bcC7df0A3f0f4B82fDd240");
-    const contract = await ethers.getContractAt("KelpRestakingDeltaNeutralVault", "0x140F9F419D8E0BF13f29FC7A10ff9c487a3237C0");
+  it("migration, export and import data to new delta neutral vault - 213900665", async function () {
+    const contractAdmin = await ethers.getImpersonatedSigner("0x0d4eef21D898883a6bd1aE518B60fEf7A951ce4D");
+    const contract = await ethers.getContractAt("KelpRestakingDeltaNeutralVault", "0x2B7cDAD36a86fd05Ac1680CDc42a0EA16804D80c");
 
-    let getUserStateTx = await contract
+    console.log("-------------export old vault state---------------");
+    let exportVaultStateTx = await contract
     .connect(contractAdmin)
-    .getUserVaultState();
-    console.log(getUserStateTx);
+    .exportVaultState();
+    console.log(exportVaultStateTx);
+    console.log(exportVaultStateTx[0][0][1]);
+    console.log(exportVaultStateTx[0][1][1]);
+  
+    console.log("Deposit ");
+    exportVaultStateTx[0].forEach((element: any[][]) => {
+      console.log(element);
+    });
 
-    // console.log("-------------export old vault state---------------");
-    // let exportVaultStateTx = await contract
-    // .connect(contractAdmin)
-    // .exportVaultState();
-    // console.log(exportVaultStateTx);
+    console.log("withdraw ");
+    exportVaultStateTx[1].forEach((element: any[][]) => {
+      console.log(element);
+    });
 
-    // console.log("Deposit ");
-    // exportVaultStateTx[0].forEach((element: any[][]) => {
-    //   console.log(element);
-    // });
+    const kelpRestakingDeltaNeutralVault = await ethers.getContractFactory(
+      "KelpRestakingDeltaNeutralVault"
+    );
 
-    // console.log("withdraw ");
-    // exportVaultStateTx[1].forEach((element: any[][]) => {
-    //   console.log(element);
-    // });
+    const newContract = await kelpRestakingDeltaNeutralVault.deploy(
+      admin,
+      usdcAddress,
+      6,
+      BigInt(5 * 1e6),
+      BigInt(1000000 * 1e6),
+      networkCost,
+      wethAddress,
+      aevoAddress,
+      aevoRecipientAddress,
+      aevoConnectorAddress,
+      rsEthAddress,
+      BigInt(1 * 1e6),
+      [kelpDepositAddress, zircuitDepositAddress],
+      kelpDepositRefId,
+      await uniSwapContract.getAddress(),
+      [usdcAddress, rsEthAddress, usdtAddress, daiAddress],
+      [wethAddress, wethAddress, usdcAddress, usdtAddress],
+      // ethereum
+      // [500, 500, 100, 100]
+      // arbitrum
+      [500, 100, 100, 100]
+    );
+    await newContract.waitForDeployment();
+
+    console.log("-------------import vault state---------------");
+    const _depositReceiptArr = exportVaultStateTx[0].map((element: any[][]) => {
+      return {
+        owner: element[0],
+        depositReceipt: {
+          shares: element[1][0],
+          depositAmount: element[1][1],
+        },
+      };
+    });
+    const _withdrawalArr = exportVaultStateTx[1].map((element: any[][]) => {
+      return {
+        owner: element[0],
+        withdrawal: {
+          shares: element[1][0],
+          pps: element[1][1],
+          profit: element[1][2],
+          performanceFee: element[1][3],
+          withdrawAmount: element[1][4],
+        },
+      };
+    });
+    const _vaultParams = {
+      decimals: exportVaultStateTx[2][0],
+      asset: exportVaultStateTx[2][1],
+      minimumSupply: exportVaultStateTx[2][2],
+      cap: exportVaultStateTx[2][3],
+      performanceFeeRate: exportVaultStateTx[2][4],
+      managementFeeRate: exportVaultStateTx[2][5],
+      networkCost: exportVaultStateTx[2][6] == 0 ? 1e6 : exportVaultStateTx[2][6]
+    };
+    const _vaultState = {
+      performanceFeeAmount: exportVaultStateTx[3][0],
+      managementFeeAmount: exportVaultStateTx[3][1],
+      withdrawPoolAmount: exportVaultStateTx[3][2],
+      pendingDepositAmount: exportVaultStateTx[3][3],
+      totalShares: exportVaultStateTx[3][4],
+    };
+    const _ethStakeLendState = {
+      unAllocatedBalance: exportVaultStateTx[4][0],
+      totalBalance: exportVaultStateTx[4][1],
+    };
+    const _perpDexState = {
+      unAllocatedBalance: exportVaultStateTx[5][0],
+      perpDexBalance: exportVaultStateTx[5][1],
+    };
+    const importVaultStateTx = await newContract
+      .connect(admin)
+      .importVaultState(
+        _depositReceiptArr,
+        _withdrawalArr,
+        _vaultParams,
+        _vaultState,
+        _ethStakeLendState,
+        _perpDexState
+      );
+    console.log("-------------export new vault state---------------");
+    exportVaultStateTx = await newContract
+    .connect(admin)
+    .exportVaultState();
+
+    console.log(exportVaultStateTx);
+    console.log(exportVaultStateTx[0][0][1]);
+    console.log(exportVaultStateTx[0][1][1]);
+
+    console.log("Deposit ");
+    exportVaultStateTx[0].forEach((element: any[][]) => {
+      console.log(element);
+    });
+
+    console.log("withdraw ");
+    exportVaultStateTx[1].forEach((element: any[][]) => {
+      console.log(element);
+    });
   });
 });

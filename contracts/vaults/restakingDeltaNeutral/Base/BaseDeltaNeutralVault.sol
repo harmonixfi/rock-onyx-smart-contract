@@ -17,7 +17,6 @@ abstract contract BaseDeltaNeutralVault is
     RockOnyxAccessControl,
     ReentrancyGuard
 {
-    uint256 private constant NETWORK_COST = 5*1e6;
     uint256 internal initialPPS;
     using ShareMath for uint256;
     using SafeERC20 for IERC20;
@@ -40,14 +39,18 @@ abstract contract BaseDeltaNeutralVault is
 
     function baseDeltaNeutralVault_Initialize(
         address _admin,
-        address _usdc, 
+        address _usdc,
+        uint8 _decimals,
+        uint256 _minimumSupply,
+        uint256 _cap,
+        uint256 _networkCost,
         uint256 _initialPPS,
         address _swapAddress,
         address[] memory _token0s,
         address[] memory _token1s,
         uint24[] memory _fees
     ) internal virtual {
-        vaultParams = VaultParams(6, _usdc, 5_000_000, 1_000_000 * 1e6, 10, 1);
+        vaultParams = VaultParams(_decimals, _usdc, _minimumSupply, _cap, 10, 1, _networkCost);
         vaultState = VaultState(0, 0, 0, 0, 0);
         initialPPS = _initialPPS;
 
@@ -191,7 +194,7 @@ abstract contract BaseDeltaNeutralVault is
         require(withdrawals[msg.sender].shares >= shares, "INVALID_SHARES");
         uint256 withdrawAmount = (shares * withdrawals[msg.sender].withdrawAmount) / withdrawals[msg.sender].shares;
         uint256 performanceFee = (shares * withdrawals[msg.sender].performanceFee) / withdrawals[msg.sender].shares;
-        withdrawAmount -= (performanceFee + NETWORK_COST);
+        withdrawAmount -= (performanceFee + vaultParams.networkCost);
 
         require( vaultState.withdrawPoolAmount > withdrawAmount, "EXCEED_WD_POOL_CAP");
         vaultState.performanceFeeAmount += performanceFee;

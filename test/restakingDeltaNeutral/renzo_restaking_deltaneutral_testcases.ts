@@ -20,7 +20,8 @@ import {
   EZETH_ETH_PRICE_FEED_ADDRESS,
   EZETH_ADDRESS,
   ZIRCUIT_DEPOSIT_ADDRESS,
-  RENZO_DEPOSIT_ADDRESS
+  RENZO_DEPOSIT_ADDRESS,
+  NETWORK_COST
 } from "../../constants";
 import { BigNumberish, Signer } from "ethers";
 
@@ -59,6 +60,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
   const daiPriceFeed = DAI_PRICE_FEED_ADDRESS[chainId];
   const renzoDepositAddress = RENZO_DEPOSIT_ADDRESS[chainId];
   const zircuitDepositAddress = ZIRCUIT_DEPOSIT_ADDRESS[chainId];
+  const networkCost = BigInt(Number(NETWORK_COST[chainId]) * 1e6);
 
   let priceConsumerContract: Contracts.PriceConsumer;
   let uniSwapContract: Contracts.UniSwap;
@@ -67,6 +69,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     const factory = await ethers.getContractFactory("PriceConsumer");
 
     priceConsumerContract = await factory.deploy(
+      admin,
       [wethAddress, ezEthAddress, usdtAddress , daiAddress],
       [usdcAddress, wethAddress, usdcAddress, usdtAddress],
       [ethPriceFeed, ezEth_EthPriceFeed, usdtPriceFeed, daiPriceFeed]
@@ -82,6 +85,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
   async function deployUniSwapContract() {
     const factory = await ethers.getContractFactory("UniSwap");
     uniSwapContract = await factory.deploy(
+      admin,
       swapRouterAddress,
       priceConsumerContract.getAddress()
     );
@@ -101,6 +105,10 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     renzoRestakingDNVault = await renzoRestakingDeltaNeutralVault.deploy(
       admin,
       usdcAddress,
+      6,
+      BigInt(5 * 1e6),
+      BigInt(1000000 * 1e6),
+      networkCost,
       wethAddress,
       aevoAddress,
       aevoRecipientAddress,
@@ -214,7 +222,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     }
   });
 
-  it.skip("user deposit -> withdraw", async function () {
+  it("user deposit -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -248,10 +256,10 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
 
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
-    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(95 * 1e6),PRECISION);
+    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost, PRECISION);
   });
 
-  it.skip("user deposit -> deposit to perp dex -> deposit to renzo -> deposit to zircuit", async function () {
+  it("user deposit -> deposit to perp dex -> deposit to renzo -> deposit to zircuit", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -348,12 +356,12 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
     expect(user1BalanceAfterWithdraw).to.approximately(
-      user2Balance + BigInt(95 * 1e6),
+      user2Balance + BigInt(100 * 1e6) - networkCost,
       PRECISION
     );
   });
 
-  it.skip("user deposit -> deposit to perp dex -> withdraw", async function () {
+  it("user deposit -> deposit to perp dex -> withdraw", async function () {
     console.log("-------------deposit to restakingDeltaNeutralVault---------------"
     );
     await deposit(user1, 100 * 1e6, usdc, usdc);
@@ -402,9 +410,9 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
 
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
-    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(95 * 1e6), PRECISION);
+    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost, PRECISION);
     totalValueLock = await logAndReturnTotalValueLock();
-    expect(totalValueLock).to.approximately(205 * 1e6, PRECISION);
+    expect(totalValueLock).to.approximately(201 * 1e6, PRECISION);
   });
 
   it.skip("migration, export and import data to new delta neutral vault - 213900665", async function () {

@@ -45,6 +45,10 @@ async function deployKelpRestakingDeltaNeutralVault() {
   kelpRestakingDNVault = await kelpRestakingDeltaNeutralVault.deploy(
     contractAdmin,
     usdcAddress,
+    6,
+    BigInt(5 * 1e6),
+    BigInt(1000000 * 1e6),
+    BigInt(1 * 1e6),
     wethAddress,
     aevoAddress,
     aevoRecipientAddress,

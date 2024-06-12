@@ -14,6 +14,10 @@ contract RenzoRestakingDeltaNeutralVault is
     constructor(
         address _admin,
         address _usdc,
+        uint8 _decimals,
+        uint256 _minimumSupply,
+        uint256 _cap,
+        uint256 _networkCost,
         address _weth,
         address _perpDexAddress,
         address _perpDexReceiver,
@@ -30,7 +34,7 @@ contract RenzoRestakingDeltaNeutralVault is
         PerpDexStrategy()
         BaseDeltaNeutralVault()
     {
-        baseDeltaNeutralVault_Initialize(_admin, _usdc, _initialPPS, _swapProxy, _token0s, _token1s, _fees);
+        baseDeltaNeutralVault_Initialize(_admin, _usdc, _decimals, _minimumSupply, _cap, _networkCost, _initialPPS, _swapProxy, _token0s, _token1s, _fees);
         ethRestaking_Initialize(_restakingToken, _usdc, _weth, _stakingProxies, _swapProxy, _token0s, _token1s, _fees);
         perpDex_Initialize(_perpDexAddress, _perpDexReceiver, _usdc, _perpDexConnector);
     }
@@ -58,22 +62,38 @@ contract RenzoRestakingDeltaNeutralVault is
         transferAssetToEthSpot(amount);
     }
 
-    /**
-     * @notice acquire asset, prepare funds for withdrawal
-     */
-    function acquireWithdrawalFunds(uint256 usdAmount) external nonReentrant {
-        _auth(ROCK_ONYX_ADMIN_ROLE);
-
-        require(usdAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+    function _acquireFunds(uint256 usdAmount) private returns(uint256){
         uint256 totalRestakingPerpDexBalance = getTotalRestakingTvl() + getTotalPerpDexTvl();
         uint256 ethStakeLendRatio =  getTotalRestakingTvl() * 1e4 / totalRestakingPerpDexBalance;
         uint256 perpDexRatio =  getTotalPerpDexTvl() * 1e4 / totalRestakingPerpDexBalance;
         uint256 ethStakeLendAmount = usdAmount * ethStakeLendRatio / 1e4;
         uint256 perpDexAmount = usdAmount * perpDexRatio / 1e4;
-        vaultState.withdrawPoolAmount += acquireFundsFromRestakingStrategy(ethStakeLendAmount);
-        vaultState.withdrawPoolAmount += acquireFundsFromPerpDex(perpDexAmount);
+
+        return acquireFundsFromRestakingStrategy(ethStakeLendAmount) + acquireFundsFromPerpDex(perpDexAmount);
     }
 
+    /**
+     * @notice acquire asset, prepare funds for withdrawal
+     */
+    function acquireWithdrawalFunds(uint256 usdAmount) external nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+        require(usdAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+
+        vaultState.withdrawPoolAmount += _acquireFunds(usdAmount);
+    }
+
+    /**
+     * @notice collect management fee
+     */
+    function collectManagementFee(uint256 usdAmount) external nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+        require(usdAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+
+        uint256 feeAmount = _acquireFunds(usdAmount);
+        vaultState.withdrawPoolAmount += feeAmount;
+        vaultState.managementFeeAmount += feeAmount;
+    }
+    
     /**
      * @notice Allow admin to transfer asset to Restaking Strategy for rebalance
      * @param amount the amount in usd we should buy eth
@@ -144,7 +164,7 @@ contract RenzoRestakingDeltaNeutralVault is
             withdrawalArr,
             vaultParams,
             vaultState,
-            restakingStratState,
+            restakingState,
             perpDexState
         );
     }
@@ -172,7 +192,7 @@ contract RenzoRestakingDeltaNeutralVault is
 
         vaultParams = _vaultParams;
         vaultState = _vaultState;
-        restakingStratState = _ethRestakingState;
+        restakingState = _ethRestakingState;
         perpDexState = _perpDexState;
     }
 }
