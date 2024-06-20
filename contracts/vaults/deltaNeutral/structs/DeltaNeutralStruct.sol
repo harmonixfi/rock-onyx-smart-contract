@@ -21,15 +21,14 @@ struct VaultParams {
     uint256 cap;
     uint256 performanceFeeRate;
     uint256 managementFeeRate;
-    uint256 networkCost;
 }
 
 struct VaultState {
-    uint256 performanceFeeAmount;
-    uint256 managementFeeAmount;
     uint256 withdrawPoolAmount;
     uint256 pendingDepositAmount;
     uint256 totalShares;
+    uint256 totalFeePoolAmount;
+    uint256 lastUpdateManagementFeeDate;
 }
 
 struct PerpDexState {
@@ -40,12 +39,6 @@ struct PerpDexState {
 struct EthStakeLendState {
     uint256 unAllocatedBalance;
     uint256 totalBalance;
-}
-
-struct DeltaNeutralAllocateRatio {
-    uint256 ethStakeLendRatio;
-    uint256 perpDexRatio;
-    uint8 decimals;
 }
 
 struct DepositReceiptArr {

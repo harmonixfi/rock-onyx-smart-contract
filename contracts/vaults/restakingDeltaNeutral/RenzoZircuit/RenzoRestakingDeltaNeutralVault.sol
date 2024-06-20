@@ -65,17 +65,34 @@ contract RenzoRestakingDeltaNeutralVault is
     /**
      * @notice acquire asset, prepare funds for withdrawal
      */
-    function acquireWithdrawalFunds(uint256 usdAmount) external nonReentrant {
+    function acquireWithdrawalFunds(uint256 amount) external nonReentrant {
         _auth(ROCK_ONYX_ADMIN_ROLE);
 
-        require(usdAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
-        uint256 totalRestakingPerpDexBalance = getTotalRestakingTvl() + getTotalPerpDexTvl();
-        uint256 ethStakeLendRatio =  getTotalRestakingTvl() * 1e4 / totalRestakingPerpDexBalance;
-        uint256 perpDexRatio =  getTotalPerpDexTvl() * 1e4 / totalRestakingPerpDexBalance;
-        uint256 ethStakeLendAmount = usdAmount * ethStakeLendRatio / 1e4;
-        uint256 perpDexAmount = usdAmount * perpDexRatio / 1e4;
-        vaultState.withdrawPoolAmount += acquireFundsFromRestakingStrategy(ethStakeLendAmount);
-        vaultState.withdrawPoolAmount += acquireFundsFromPerpDex(perpDexAmount);
+        require(amount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+        
+        vaultState.withdrawPoolAmount += _acquireFunds(amount);
+    }
+
+    /**
+     * @notice acquire asset, prepare funds for withdrawal
+     */
+    function acquireManagementFee(uint256 timestamp) external nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+
+        uint256 feeAmount = _getManagementFee(timestamp);
+        require(feeAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+
+        vaultState.totalFeePoolAmount += _acquireFunds(feeAmount);
+        vaultState.lastUpdateManagementFeeDate = block.timestamp;
+    }
+
+    /**
+     * @notice acquire asset, prepare funds
+     */
+    function _acquireFunds(uint256 amount) private returns(uint256) {
+        (uint256 ethStakeRatio, uint256 perpDexRatio) = _allocatedRatio();
+        return acquireFundsFromRestakingStrategy(amount * ethStakeRatio / 1e4) + 
+                                    acquireFundsFromPerpDex(amount * perpDexRatio / 1e4);
     }
 
     /**
@@ -107,11 +124,14 @@ contract RenzoRestakingDeltaNeutralVault is
         syncPerpDexBalance(perpDexbalance);
     }
 
-    function allocatedRatio() external view returns (uint256, uint256) {
-        uint256 totalRestakingPerpDexBalance = getTotalRestakingTvl() + getTotalPerpDexTvl();
-        uint256 ethStakeLendRatio =  getTotalRestakingTvl() * 1e4 / totalRestakingPerpDexBalance;
-        uint256 perpDexRatio =  getTotalPerpDexTvl() * 1e4 / totalRestakingPerpDexBalance;
-        return (ethStakeLendRatio, perpDexRatio);
+
+    function _allocatedRatio() internal override view returns (uint256, uint256) {
+        if(_totalValueLocked() == 0){
+            return (5000, 5000);  
+        }
+
+        uint256 tvl = getTotalRestakingTvl() + getTotalPerpDexTvl();
+        return (getTotalRestakingTvl() * 1e4 / tvl, getTotalPerpDexTvl() * 1e4 / tvl);
     }
 
     /**
@@ -122,8 +142,7 @@ contract RenzoRestakingDeltaNeutralVault is
             vaultState.pendingDepositAmount +
             vaultState.withdrawPoolAmount +
             getTotalRestakingTvl() +
-            getTotalPerpDexTvl() - 
-            vaultState.managementFeeAmount;
+            getTotalPerpDexTvl();
     }
 
     /**

@@ -27,7 +27,7 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
     event RoundClosed(
         uint256 roundNumber,
         uint256 totalAssets,
-        uint256 totalFee
+        uint256 newPricePerShare
     );
     event FeeRatesUpdated(uint256 performanceFee, uint256 managementFee);
 
@@ -65,7 +65,7 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
 
         currentRound = 0;
         vaultParams = VaultParams(_decimals, _usdc, _minimumSupply, _cap, 10, 1);
-        vaultState = VaultState(0, 0, 0, 0, 0, 0, 0);
+        vaultState = VaultState(0, 0, 0, 0, block.timestamp);
         allocateRatio = AllocateRatio(6000, 2000, 2000, 4);
         networkCost = _networkCost;
 
@@ -151,12 +151,9 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
      * @notice allocate assets to strategies
      */
     function allocateAssets() private {
-        uint256 depositToEthLPAmount = (vaultState.pendingDepositAmount *
-            allocateRatio.ethLPRatio) / 10 ** allocateRatio.decimals;
-        uint256 depositToUsdLPAmount = (vaultState.pendingDepositAmount *
-            allocateRatio.usdLPRatio) / 10 ** allocateRatio.decimals;
-        uint256 depositOptionsAmount = (vaultState.pendingDepositAmount *
-            allocateRatio.optionsRatio) / 10 ** allocateRatio.decimals;
+        uint256 depositToEthLPAmount = (vaultState.pendingDepositAmount * allocateRatio.ethLPRatio) / 10 ** allocateRatio.decimals;
+        uint256 depositToUsdLPAmount = (vaultState.pendingDepositAmount * allocateRatio.usdLPRatio) / 10 ** allocateRatio.decimals;
+        uint256 depositOptionsAmount = (vaultState.pendingDepositAmount * allocateRatio.optionsRatio) / 10 ** allocateRatio.decimals;
         vaultState.pendingDepositAmount -= (depositToEthLPAmount +
             depositToUsdLPAmount +
             depositOptionsAmount);
@@ -256,24 +253,18 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
         (uint256 profit, ) = getPnL();
         uint withdrawProfit = profit > 0 ? (profit * withdrawals[msg.sender].shares) / (withdrawals[msg.sender].shares + depositReceipts[msg.sender].shares) : 0;
         uint256 performanceFee = withdrawProfit > 0 ? (withdrawProfit * vaultParams.performanceFeeRate) / 1e2 : 0;
-        vaultState.performanceFeeAmount += performanceFee;
-        vaultState.managementFeeAmount += networkCost;
-        withdrawAmount -= (performanceFee + networkCost);
+        uint256 feeAmount = performanceFee + networkCost;
+        vaultState.totalFeePoolAmount += feeAmount;
 
-        require(vaultState.withdrawPoolAmount > withdrawAmount, "EXD_WD_POOL_CAP");
-        
+        require(vaultState.withdrawPoolAmount > withdrawAmount - feeAmount, "EXD_WD_POOL_CAP");
+        withdrawAmount = vaultState.withdrawPoolAmount < withdrawAmount ? vaultState.withdrawPoolAmount : withdrawAmount;
         vaultState.withdrawPoolAmount -= withdrawAmount;
-        depositReceipts[msg.sender].depositAmount -=
-            (shares * depositReceipts[msg.sender].depositAmount) /
-            (depositReceipts[msg.sender].shares +
-                withdrawals[msg.sender].shares);
+        depositReceipts[msg.sender].depositAmount -= (shares * depositReceipts[msg.sender].depositAmount) / (depositReceipts[msg.sender].shares + withdrawals[msg.sender].shares);
         withdrawals[msg.sender].shares -= shares;
-        IERC20(vaultParams.asset).safeTransfer(msg.sender, withdrawAmount);
-        emit Withdrawn(
-            msg.sender,
-            withdrawAmount,
-            withdrawals[msg.sender].shares
-        );
+        vaultState.totalShares -= shares;
+
+        IERC20(vaultParams.asset).safeTransfer(msg.sender, withdrawAmount - feeAmount);
+        emit Withdrawn(msg.sender, withdrawAmount, withdrawals[msg.sender].shares);
 
         // migration
         updateDepositArr(depositReceipts[msg.sender]);
@@ -284,20 +275,17 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
     /**
      * @notice claimFee to claim vault fee.
      */
-    function claimFee(address receiver) external nonReentrant {
+    function claimFee(address receiver, uint256 amount) external nonReentrant {
         _auth(ROCK_ONYX_ADMIN_ROLE);
-        uint256 totalFeeAmount = vaultState.performanceFeeAmount + vaultState.managementFeeAmount;
-        if (totalFeeAmount > vaultState.withdrawPoolAmount) {
-            vaultState.performanceFeeAmount = 0;
-            vaultState.managementFeeAmount = 0;
-            vaultState.withdrawPoolAmount = 0;
-            IERC20(vaultParams.asset).safeTransfer(msg.sender, vaultState.withdrawPoolAmount);
+
+        if (amount > vaultState.totalFeePoolAmount) {
+            vaultState.totalFeePoolAmount = 0;
+            IERC20(vaultParams.asset).safeTransfer(msg.sender, vaultState.totalFeePoolAmount);
             return;
         }
-        vaultState.withdrawPoolAmount -= totalFeeAmount;
-        vaultState.performanceFeeAmount = 0;
-        vaultState.managementFeeAmount = 0;
-        IERC20(vaultParams.asset).safeTransfer(receiver, totalFeeAmount);
+
+        vaultState.totalFeePoolAmount -= amount;
+        IERC20(vaultParams.asset).safeTransfer(receiver, amount);
     }
 
     /**
@@ -308,18 +296,13 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
         closeEthLPRound();
         closeUsdLPRound();
         closeOptionsRound();
-        vaultState.currentRoundFeeAmount = getManagementFee();
         roundPricePerShares[currentRound] = ShareMath.pricePerShare(
             vaultState.totalShares,
-            _totalValueLocked() - vaultState.currentRoundFeeAmount,
+            _totalValueLocked(),
             vaultParams.decimals
         );
         recalculateAllocateRatio();
-        emit RoundClosed(
-            currentRound,
-            _totalValueLocked(),
-            vaultState.currentRoundFeeAmount
-        );
+        emit RoundClosed(currentRound, _totalValueLocked(), roundPricePerShares[currentRound]);
         currentRound++;
     }
 
@@ -327,11 +310,14 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
         return vaultState;
     }
 
-    /**
-     * @notice get vault fees
-     */
-    function getManagementFee() private view returns (uint256) {
-        return (_totalValueLocked() * vaultParams.managementFeeRate) / 100 / 52;
+    function getManagementFee() public view returns (uint256, uint256) {
+        return (_getManagementFee(block.timestamp), block.timestamp);
+    }
+
+    function _getManagementFee(uint256 timestamp) internal view returns (uint256) {
+        uint256 perSecondRate = vaultParams.managementFeeRate * 1e12 / (365 * 86400) + 1; // +1 mean round up second rate
+        uint256 period = timestamp - vaultState.lastUpdateManagementFeeDate;
+        return ((_totalValueLocked() - vaultState.withdrawPoolAmount) * perSecondRate * period) / 1e14;
     }
 
     /**
@@ -346,16 +332,30 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
      */
     function acquireWithdrawalFunds() external nonReentrant {
         _auth(ROCK_ONYX_ADMIN_ROLE);
-        uint256 withdrawAmountIncludeFee = (roundWithdrawalShares[currentRound - 1] * 
-            roundPricePerShares[currentRound - 1]) / 1e6 + vaultState.currentRoundFeeAmount;
-        uint256 withdrawEthLPAmount = (withdrawAmountIncludeFee * allocateRatio.ethLPRatio) / 10 ** allocateRatio.decimals;
-        uint256 withdrawUsdLPAmount = (withdrawAmountIncludeFee * allocateRatio.usdLPRatio) / 10 ** allocateRatio.decimals;
-        uint256 withdrawOptionsAmount = (withdrawAmountIncludeFee * allocateRatio.optionsRatio) / 10 ** allocateRatio.decimals;
-        vaultState.withdrawPoolAmount += acquireWithdrawalFundsEthLP(withdrawEthLPAmount);
-        vaultState.withdrawPoolAmount += acquireWithdrawalFundsUsdLP(withdrawUsdLPAmount);
-        vaultState.withdrawPoolAmount += acquireWithdrawalFundsUsdOptions(withdrawOptionsAmount);
-        vaultState.managementFeeAmount += vaultState.currentRoundFeeAmount;
-        vaultState.totalShares -= roundWithdrawalShares[currentRound];
+        uint256 withdrawAmount = roundWithdrawalShares[currentRound - 1] * roundPricePerShares[currentRound - 1] / 1e6;
+        vaultState.withdrawPoolAmount += _acquireFunds(withdrawAmount);
+    }
+
+    /**
+     * @notice acquire asset, prepare funds for withdrawal
+     */
+    function acquireManagementFee(uint256 timestamp) external nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+
+        uint256 feeAmount = _getManagementFee(timestamp);
+        require(feeAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+
+        vaultState.totalFeePoolAmount += _acquireFunds(feeAmount);
+        vaultState.lastUpdateManagementFeeDate = block.timestamp;
+    }
+
+    /**
+     * @notice acquire asset, prepare funds for withdrawal
+     */
+    function _acquireFunds(uint256 amount) private returns(uint256) {
+        return acquireWithdrawalFundsEthLP((amount * allocateRatio.ethLPRatio) / 10 ** allocateRatio.decimals) + 
+                acquireWithdrawalFundsUsdLP((amount * allocateRatio.usdLPRatio) / 10 ** allocateRatio.decimals) + 
+                acquireWithdrawalFundsUsdOptions((amount * allocateRatio.optionsRatio) / 10 ** allocateRatio.decimals);
     }
 
     /**
@@ -406,9 +406,8 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
      * @notice get total withdraw amount of current round
      */
     function getRoundWithdrawAmount() external view returns (uint256) {
-        uint256 withdrawAmount = (roundWithdrawalShares[currentRound - 1] *
+        return (roundWithdrawalShares[currentRound - 1] *
             roundPricePerShares[currentRound - 1]) / 1e6;
-        return withdrawAmount + vaultState.currentRoundFeeAmount;
     }
 
     /**
@@ -448,6 +447,7 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
     function _totalValueLocked() private view returns (uint256) {
         return
             vaultState.pendingDepositAmount +
+            vaultState.withdrawPoolAmount +
             getTotalEthLPAssets() +
             getTotalUsdLPAssets() +
             getTotalOptionsAmount();

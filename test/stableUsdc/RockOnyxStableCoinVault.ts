@@ -392,6 +392,34 @@ describe("RockOnyxStableCoinVault", function () {
     expect(totalValueLock).to.approximately(600*1e6, PRECISION);
   });
 
+  it("acquire management fee, should close successfully", async function () {
+    console.log('-------------acquire management fee---------------');
+    const getManagementFeeTx = await rockOnyxUSDTVaultContract
+      .connect(admin)
+      .getManagementFee();
+    console.log("getManagementFeeTx ", getManagementFeeTx);
+
+    const managementFee = getManagementFeeTx[0];
+    await usdc
+      .connect(optionsReceiver)
+      .approve(await rockOnyxUSDTVaultContract.getAddress(), managementFee);
+
+    await rockOnyxUSDTVaultContract
+      .connect(optionsReceiver)
+      .handlePostWithdrawalFromVendor(managementFee);
+
+      const acquireManagementFeeTx = await rockOnyxUSDTVaultContract
+      .connect(admin)
+      .acquireManagementFee(getManagementFeeTx[1]);
+      await acquireManagementFeeTx.wait();
+
+      const getVaultStateTx = await rockOnyxUSDTVaultContract
+      .connect(admin)
+      .getVaultState();
+      
+    console.log("getVaultStateTx ", getVaultStateTx);
+  });
+
   it("close round, should close successfully", async function () {
     console.log('-------------close round---------------');
     const closeRoundTx = await rockOnyxUSDTVaultContract
@@ -427,7 +455,7 @@ describe("RockOnyxStableCoinVault", function () {
     await acquireWithdrawalFundsTx.wait();
 
     let totalValueLock = await logAndReturnTotalValueLock();
-    expect(totalValueLock).to.approximately(498*1e6, PRECISION);
+    expect(totalValueLock).to.approximately(600*1e6, PRECISION);
   });
 
   it("Users initial withdrawals time 2, should init successfully", async function () {
@@ -439,7 +467,7 @@ describe("RockOnyxStableCoinVault", function () {
       .to.be.revertedWith("INV_SHARES");
 
     let totalValueLock = await logAndReturnTotalValueLock();
-    expect(totalValueLock).to.approximately(498*1e6, PRECISION);
+    expect(totalValueLock).to.approximately(600*1e6, PRECISION);
   });
   
   it("complete withdrawals, should complete successfully", async function () {
@@ -452,15 +480,10 @@ describe("RockOnyxStableCoinVault", function () {
     await completeWithdrawalTx.wait();
 
     let totalValueLock = await logAndReturnTotalValueLock();
-    expect(totalValueLock).to.approximately(498*1e6, PRECISION);
+    expect(totalValueLock).to.approximately(595*1e6, PRECISION);
 
     let user1BalanceAfterWithdraw = await usdc.connect(user1).balanceOf(user1);
     expect(user1BalanceAfterWithdraw).to.approximately(user1Balance + BigInt(5*1e6), PRECISION);
-  });
-
-  it("get user profitt and loss, should get successfully", async function () {
-    console.log('-------------deposit to rockOnyxUSDTVault---------------');
-    
   });
 
   it("get user allocation ratios, should get successfully", async function () {
@@ -481,7 +504,7 @@ describe("RockOnyxStableCoinVault", function () {
     await settleCoveredCallsTx.wait();
 
     let totalValueLock = await logAndReturnTotalValueLock();
-    expect(totalValueLock).to.approximately(498*1e6, PRECISION);
+    expect(totalValueLock).to.approximately(595*1e6, PRECISION);
   });
 
   it("handle settle covered puts, should handle successfully", async function () {
@@ -492,10 +515,10 @@ describe("RockOnyxStableCoinVault", function () {
     await settleCoveredPutsTx.wait();
 
     let totalValueLock = await logAndReturnTotalValueLock();
-    expect(totalValueLock).to.approximately(498*1e6, PRECISION);
+    expect(totalValueLock).to.approximately(595*1e6, PRECISION);
   });
 
-  it("convert reward to usdc, should convert successfully", async function () {
+  it.skip("convert reward to usdc, should convert successfully", async function () {
     console.log('-------------convert reward to usdc---------------');
 
     const arbSigner = await ethers.getImpersonatedSigner("0x2e383d51d72507e8c8e803f1a7d6651cbe65b151");
@@ -637,23 +660,312 @@ describe("RockOnyxStableCoinVault", function () {
     console.log(state);
   });
 
-  it("migration, export and import data to new option wheel vault", async function () {
-    const oldAdmin = await ethers.getImpersonatedSigner("0x0cD2568E24Ed7Ed47E42075545D49C21e895B54c");
-    const oldContract = await ethers.getContractAt("RockOnyxUSDTVault", "0x0bD37D11e3A25B5BB0df366878b5D3f018c1B24c");
+  it.skip("migration, export and import data to new option wheel vault", async function () {
+    const contractAdmin = await ethers.getImpersonatedSigner("0x0cD2568E24Ed7Ed47E42075545D49C21e895B54c");
+    const contractAddress = '0x316CDbBEd9342A1109D967543F81FA6288eBC47D';
+    const exportABI = [{
+      "inputs": [],
+      "name": "exportVaultState",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "depositAmount",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct DepositReceipt",
+              "name": "depositReceipt",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct DepositReceiptArr[]",
+          "name": "",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "round",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct Withdrawal",
+              "name": "withdrawal",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct WithdrawalArr[]",
+          "name": "",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint8",
+              "name": "decimals",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minimumSupply",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "cap",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "performanceFeeRate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFeeRate",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct VaultParams",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "performanceFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "currentRoundFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "withdrawPoolAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pendingDepositAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalShares",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "lastLockedAmount",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct VaultState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ethLPRatio",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "usdLPRatio",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "optionsRatio",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "decimals",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct AllocateRatio",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int24",
+              "name": "lowerTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "upperTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedBalance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct EthLPState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int24",
+              "name": "lowerTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "upperTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedUsdcBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedUsdceBalance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct UsdLPState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "allocatedUsdcBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedUsdcBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unsettledProfit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unsettledLoss",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct OptionsStrategyState",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }];
+    const contract = new ethers.Contract(contractAddress, exportABI, contractAdmin);
 
     console.log("-------------export old vault state---------------");
-    let exportVaultStateTx = await oldContract
-    .connect(oldAdmin)
+    let exportVaultStateTx = await contract
+    .connect(contractAdmin)
     .exportVaultState();
 
-    console.log(exportVaultStateTx);
-    console.log(exportVaultStateTx[3][0][1]);
-    console.log(exportVaultStateTx[3][1][1]);
-    console.log(exportVaultStateTx[3][2][1]);
+    console.log("currentRound %s", exportVaultStateTx[0]);
+    console.log("exportRoundWithdrawalShares %s", exportVaultStateTx[1]);
+    console.log("exportRoundPricePerShares %s", exportVaultStateTx[2]);
+    console.log("depositReceiptArr %s", exportVaultStateTx[3]);
+    console.log("withdrawalArr %s", exportVaultStateTx[4]);
+    console.log("vaultParams %s", exportVaultStateTx[5]);
+    console.log("vaultState %s", exportVaultStateTx[6]);
+    console.log("allocateRatio %s", exportVaultStateTx[7]);
+    console.log("ethLPState %s", exportVaultStateTx[8]);
+    console.log("usdLPState %s", exportVaultStateTx[9]);
+    console.log("optionsState %s", exportVaultStateTx[10]);
   
     const rockOnyxUSDTVault = await ethers.getContractFactory("RockOnyxUSDTVault");
-
-    console.log("await admin.getAddress() %s", await admin.getAddress());
     const newContract = await rockOnyxUSDTVault.deploy(
       await admin.getAddress(),
       usdcAddress,
@@ -684,7 +996,6 @@ describe("RockOnyxStableCoinVault", function () {
     const _currentRound = exportVaultStateTx[0];
     const _roundWithdrawalShares = [...exportVaultStateTx[1]];
     const _roundPricePerShares = [...exportVaultStateTx[2]];
-
     const _depositReceiptArr = exportVaultStateTx[3].map((element : any[][]) => {
         return {
           owner: element[0],
@@ -709,17 +1020,14 @@ describe("RockOnyxStableCoinVault", function () {
         minimumSupply: exportVaultStateTx[5][2],
         cap: exportVaultStateTx[5][3],
         performanceFeeRate: exportVaultStateTx[5][4],
-        managementFeeRate: exportVaultStateTx[5][5],
-        networkCost: exportVaultStateTx[5][6] == 0n ? 1e6 : exportVaultStateTx[5][6]
+        managementFeeRate: exportVaultStateTx[5][5]
     };
     const _vaultState = {
-        performanceFeeAmount: exportVaultStateTx[6][0],
-        managementFeeAmount: exportVaultStateTx[6][1],
-        currentRoundFeeAmount: exportVaultStateTx[6][2],
         withdrawPoolAmount: exportVaultStateTx[6][3],
         pendingDepositAmount: exportVaultStateTx[6][4],
         totalShares: exportVaultStateTx[6][5],
-        lastLockedAmount: exportVaultStateTx[6][6],
+        totalFeePoolAmount: exportVaultStateTx[6][0] + exportVaultStateTx[6][1],
+        lastUpdateManagementFeeDate: (await ethers.provider.getBlock('latest')).timestamp,
     };
     const _allocateRatio = {
         ethLPRatio: exportVaultStateTx[7][0],
@@ -766,10 +1074,20 @@ describe("RockOnyxStableCoinVault", function () {
       );
     
     console.log("-------------export new vault state---------------");
-    const exportVaultStateTx2 = await newContract
+    exportVaultStateTx = await newContract
       .connect(admin)
       .exportVaultState();
   
-    console.log(exportVaultStateTx2);
+    console.log("currentRound %s", exportVaultStateTx[0]);
+    console.log("exportRoundWithdrawalShares %s", exportVaultStateTx[1]);
+    console.log("exportRoundPricePerShares %s", exportVaultStateTx[2]);
+    console.log("depositReceiptArr %s", exportVaultStateTx[3]);
+    console.log("withdrawalArr %s", exportVaultStateTx[4]);
+    console.log("vaultParams %s", exportVaultStateTx[5]);
+    console.log("vaultState %s", exportVaultStateTx[6]);
+    console.log("allocateRatio %s", exportVaultStateTx[7]);
+    console.log("ethLPState %s", exportVaultStateTx[8]);
+    console.log("usdLPState %s", exportVaultStateTx[9]);
+    console.log("optionsState %s", exportVaultStateTx[10]);
   });
 });

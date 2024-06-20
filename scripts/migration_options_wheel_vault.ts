@@ -12,10 +12,293 @@ const oldPrivateKey = process.env.OLD_PRIVATE_KEY || "";
 
 async function main() {
     console.log('-------------migration option wheel---------------');
-    
-    const oldAdmin = new ethers.Wallet(oldPrivateKey, ethers.provider);
-    const oldVaultAddress = "0x0bD37D11e3A25B5BB0df366878b5D3f018c1B24c";
-    const oldContract = await ethers.getContractAt("RockOnyxUSDTVault", oldVaultAddress);
+     const oldAdmin = new ethers.Wallet(oldPrivateKey, ethers.provider);
+    console.log("old admin address %s", await oldAdmin.getAddress());
+    const oldVaultAddress = "0x316CDbBEd9342A1109D967543F81FA6288eBC47D";
+    const exportABI = [{
+      "inputs": [],
+      "name": "exportVaultState",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "depositAmount",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct DepositReceipt",
+              "name": "depositReceipt",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct DepositReceiptArr[]",
+          "name": "",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "round",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct Withdrawal",
+              "name": "withdrawal",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct WithdrawalArr[]",
+          "name": "",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint8",
+              "name": "decimals",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minimumSupply",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "cap",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "performanceFeeRate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFeeRate",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct VaultParams",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "performanceFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "currentRoundFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "withdrawPoolAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pendingDepositAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalShares",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "lastLockedAmount",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct VaultState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ethLPRatio",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "usdLPRatio",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "optionsRatio",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "decimals",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct AllocateRatio",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int24",
+              "name": "lowerTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "upperTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedBalance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct EthLPState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int24",
+              "name": "lowerTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "upperTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedUsdcBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedUsdceBalance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct UsdLPState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "allocatedUsdcBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedUsdcBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unsettledProfit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "unsettledLoss",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct OptionsStrategyState",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }];
+    const oldContract = new ethers.Contract(oldVaultAddress, exportABI, oldAdmin);
 
     const newAdmin = new ethers.Wallet(privateKey, ethers.provider);
     console.log("new admin address %s", await newAdmin.getAddress());
@@ -28,7 +311,7 @@ async function main() {
       .connect(oldAdmin)
       .exportVaultState();
     
-    console.log("Current Round %s", exportVaultStateTx[0]);
+    console.log("currentRound %s", exportVaultStateTx[0]);
     console.log("exportRoundWithdrawalShares %s", exportVaultStateTx[1]);
     console.log("exportRoundPricePerShares %s", exportVaultStateTx[2]);
     console.log("depositReceiptArr %s", exportVaultStateTx[3]);
@@ -40,24 +323,18 @@ async function main() {
     console.log("usdLPState %s", exportVaultStateTx[9]);
     console.log("optionsState %s", exportVaultStateTx[10]);
 
-    let exportVaultStateTx1 = await oldContract
-      .connect(oldAdmin)
-      .getEthLPState();
-    
-    console.log("exportVaultStateTx1 %s", exportVaultStateTx1);
-
     console.log("-------------import vault state---------------");
     const _currentRound = exportVaultStateTx[0];
     const _roundWithdrawalShares = [...exportVaultStateTx[1]];
     const _roundPricePerShares = [...exportVaultStateTx[2]];
     const _depositReceiptArr = exportVaultStateTx[3].map((element : any[][]) => {
-      return {
-        owner: element[0],
-        depositReceipt: {
-          shares: element[1][0],
-          depositAmount: element[1][1],
-        },
-      };
+        return {
+          owner: element[0],
+          depositReceipt: {
+            shares: element[1][0],
+            depositAmount: element[1][1],
+          },
+        };
     });
     const _withdrawalArr = exportVaultStateTx[4].map((element : any[][]) => {
         return {
@@ -77,13 +354,11 @@ async function main() {
         managementFeeRate: exportVaultStateTx[5][5]
     };
     const _vaultState = {
-        performanceFeeAmount: exportVaultStateTx[6][0],
-        managementFeeAmount: exportVaultStateTx[6][1],
-        currentRoundFeeAmount: exportVaultStateTx[6][2],
         withdrawPoolAmount: exportVaultStateTx[6][3],
         pendingDepositAmount: exportVaultStateTx[6][4],
         totalShares: exportVaultStateTx[6][5],
-        lastLockedAmount: exportVaultStateTx[6][6],
+        totalFeePoolAmount: exportVaultStateTx[6][0] + exportVaultStateTx[6][1],
+        lastUpdateManagementFeeDate: (await ethers.provider.getBlock('latest')).timestamp,
     };
     const _allocateRatio = {
         ethLPRatio: exportVaultStateTx[7][0],
@@ -134,17 +409,17 @@ async function main() {
       .connect(newAdmin)
       .exportVaultState();
     
-      console.log("Current Round %s", exportVaultStateTx[0]);
-      console.log("exportRoundWithdrawalShares %s", exportVaultStateTx[1]);
-      console.log("exportRoundPricePerShares %s", exportVaultStateTx[2]);
-      console.log("depositReceiptArr %s", exportVaultStateTx[3]);
-      console.log("withdrawalArr %s", exportVaultStateTx[4]);
-      console.log("vaultParams %s", exportVaultStateTx[5]);
-      console.log("vaultState %s", exportVaultStateTx[6]);
-      console.log("allocateRatio %s", exportVaultStateTx[7]);
-      console.log("ethLPState %s", exportVaultStateTx[8]);
-      console.log("usdLPState %s", exportVaultStateTx[9]);
-      console.log("optionsState %s", exportVaultStateTx[10]);
+    console.log("currentRound %s", exportVaultStateTx[0]);
+    console.log("exportRoundWithdrawalShares %s", exportVaultStateTx[1]);
+    console.log("exportRoundPricePerShares %s", exportVaultStateTx[2]);
+    console.log("depositReceiptArr %s", exportVaultStateTx[3]);
+    console.log("withdrawalArr %s", exportVaultStateTx[4]);
+    console.log("vaultParams %s", exportVaultStateTx[5]);
+    console.log("vaultState %s", exportVaultStateTx[6]);
+    console.log("allocateRatio %s", exportVaultStateTx[7]);
+    console.log("ethLPState %s", exportVaultStateTx[8]);
+    console.log("usdLPState %s", exportVaultStateTx[9]);
+    console.log("optionsState %s", exportVaultStateTx[10]);
   }
 main().catch((error) => {
     console.error(error);
