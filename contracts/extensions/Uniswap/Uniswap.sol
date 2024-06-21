@@ -22,28 +22,25 @@ contract UniSwap is BaseSwap {
         address tokenOut,
         uint24 poolFee
     ) external returns (uint256) {
-        TransferHelper.safeTransferFrom(
-            tokenIn,
-            msg.sender,
-            address(this),
-            amountIn
-        );
+        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
         TransferHelper.safeApprove(tokenIn, address(swapRouter), amountIn);
         uint256 amountOutMinimum = getAmountOutMinimum(
             tokenIn,
             tokenOut,
             amountIn
         );
-
-        IUniSwapRouter.ExactInputSingleParams memory params = IUniSwapRouter
-            .ExactInputSingleParams({
+            console.log("tokenIn ", address(tokenIn));
+            console.log("tokenOut ", tokenOut);
+            console.log("swapRouter ", address(swapRouter));
+            console.log("amountOutMinimum ", amountOutMinimum);
+        IUniSwapRouter.BaseExactInputSingleParams memory params = IUniSwapRouter
+            .BaseExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
                 fee: poolFee,
                 recipient: recipient,
-                deadline: block.timestamp,
                 amountIn: amountIn,
-                amountOutMinimum: amountOutMinimum,
+                amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             });
 
@@ -57,32 +54,16 @@ contract UniSwap is BaseSwap {
         address tokenOut,
         uint24 poolFee
     ) external returns (uint256) {
-        uint256 amountInMaximum = getAmountInMaximum(
-            tokenIn,
-            tokenOut,
-            amountOut
-        );
-        
-        TransferHelper.safeTransferFrom(
-            tokenIn,
-            msg.sender,
-            address(this),
-            amountInMaximum
-        );
-        
-        TransferHelper.safeApprove(
-            tokenIn,
-            address(swapRouter),
-            amountInMaximum
-        );
-
+        uint256 amountInMaximum = getAmountInMaximum(tokenIn, tokenOut, amountOut);
+        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountInMaximum);
+        TransferHelper.safeApprove(tokenIn, address(swapRouter), amountInMaximum);
         IUniSwapRouter.ExactOutputSingleParams memory params = IUniSwapRouter
             .ExactOutputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
                 fee: poolFee,
                 recipient: recipient,
-                deadline: block.timestamp,
+                //deadline: block.timestamp,
                 amountOut: amountOut,
                 amountInMaximum: amountInMaximum,
                 sqrtPriceLimitX96: 0

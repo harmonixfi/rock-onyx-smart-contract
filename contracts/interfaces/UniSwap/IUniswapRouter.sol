@@ -40,12 +40,22 @@ interface IUniSwapRouter {
         uint160 sqrtPriceLimitX96;
     }
 
+    struct BaseExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        address recipient;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
+
     struct ExactOutputSingleParams {
         address tokenIn;
         address tokenOut;
         uint24 fee;
         address recipient;
-        uint256 deadline;
+        // uint256 deadline;
         uint256 amountOut;
         uint256 amountInMaximum;
         uint160 sqrtPriceLimitX96;
@@ -56,6 +66,10 @@ interface IUniSwapRouter {
     /// @return amountOut The amount of the received token
     function exactInputSingle(
         ExactInputSingleParams calldata params
+    ) external payable returns (uint amountOut);
+
+    function exactInputSingle(
+        BaseExactInputSingleParams calldata params
     ) external payable returns (uint amountOut);
 
     function exactOutputSingle(
