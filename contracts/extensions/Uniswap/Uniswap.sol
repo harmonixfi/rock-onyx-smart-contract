@@ -41,7 +41,8 @@ contract UniSwap is BaseSwap {
                 tokenOut: tokenOut,
                 fee: poolFee,
                 recipient: recipient,
-                deadline: block.timestamp,
+                // for base network
+                // deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: amountOutMinimum,
                 sqrtPriceLimitX96: 0
@@ -62,7 +63,6 @@ contract UniSwap is BaseSwap {
             tokenOut,
             amountOut
         );
-        
         TransferHelper.safeTransferFrom(
             tokenIn,
             msg.sender,
@@ -82,7 +82,8 @@ contract UniSwap is BaseSwap {
                 tokenOut: tokenOut,
                 fee: poolFee,
                 recipient: recipient,
-                deadline: block.timestamp,
+                // for base network
+                // deadline: block.timestamp,
                 amountOut: amountOut,
                 amountInMaximum: amountInMaximum,
                 sqrtPriceLimitX96: 0

@@ -34,7 +34,8 @@ interface IUniSwapRouter {
         address tokenOut;
         uint24 fee;
         address recipient;
-        uint256 deadline;
+        // for base network
+        // uint256 deadline;
         uint256 amountIn;
         uint256 amountOutMinimum;
         uint160 sqrtPriceLimitX96;
@@ -45,7 +46,8 @@ interface IUniSwapRouter {
         address tokenOut;
         uint24 fee;
         address recipient;
-        uint256 deadline;
+        // for base network
+        // uint256 deadline;
         uint256 amountOut;
         uint256 amountInMaximum;
         uint160 sqrtPriceLimitX96;

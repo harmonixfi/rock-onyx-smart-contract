@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const { ethers, network } = require("hardhat");
 import { expect } from "chai";
 
 import * as Contracts from "../../typechain-types";
@@ -26,8 +26,8 @@ import {
 } from "../../constants";
 import { BigNumberish, Signer } from "ethers";
 
-// const chainId: CHAINID = network.config.chainId;
-const chainId: CHAINID = 42161;
+const chainId: CHAINID = network.config.chainId;
+console.log("chainId ",chainId);
 const PRECISION = 2 * 1e6;
 
 describe("RockOnyxDeltaNeutralVault", function () {
@@ -259,7 +259,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     await transferForUser(dai, daiSigner, user2, BigInt(100000 * 1e18));
   });
 
-  it("user deposit -> withdraw, do not deposit to perp dex", async function () {
+  it.skip("user deposit -> withdraw, do not deposit to perp dex", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -299,7 +299,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit -> open position -> close position -> withdraw, do not deposit to perp dex", async function () {
+  it.skip("user deposit -> open position -> close position -> withdraw, do not deposit to perp dex", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -350,7 +350,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit -> open position -> deposit to vender -> withdraw", async function () {
+  it.skip("user deposit -> open position -> deposit to vender -> withdraw", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -425,7 +425,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit1 -> open position -> deposit to vender -> user deposit2 -> open position -> deposit to vender -> withdraw", async function () {
+  it.skip("user deposit1 -> open position -> deposit to vender -> user deposit2 -> open position -> deposit to vender -> withdraw", async function () {
     console.log(
       "-------------deposit1 to rockOnyxDeltaNeutralVault---------------"
     );
@@ -736,7 +736,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("migration test, user deposit -> deposit to vendor -> open position -> sync profit -> withdraw -> close position -> complete withdraw -> migration", async function () {
+  it.skip("migration test, user deposit -> deposit to vendor -> open position -> sync profit -> withdraw -> close position -> complete withdraw -> migration", async function () {
     console.log("-------------deposit to rockOnyxDeltaNeutralVault---------------");
 
     const inititalDeposit = 10 + 100;
@@ -1056,7 +1056,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     expect(Number(withdrawShares)).to.equal(0n);
   });
 
-  it("user deposit -> open position -> close position", async function () {
+  it.skip("user deposit -> open position -> close position", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );

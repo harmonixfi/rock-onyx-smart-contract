@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../../interfaces/IAevo.sol";
+import "../../../interfaces/IPerpDexProxy.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
 import "../../../interfaces/IOptionsVendorProxy.sol";
 import "../structs/RockOnyxStructs.sol";
@@ -16,7 +16,7 @@ contract RockOnyxOptionStrategy is RockOnyxAccessControl, ReentrancyGuard {
     address perpDexAsset;
     address perpDexReceiver;
     address private perpDexConnector;
-    IAevo private AEVO;
+    IPerpDexProxy private perpDexProxy;
     OptionsStrategyState internal optionsState;
 
     /************************************************
@@ -41,7 +41,7 @@ contract RockOnyxOptionStrategy is RockOnyxAccessControl, ReentrancyGuard {
         address _perpDexAsset
     ) internal {
         optionsState = OptionsStrategyState(0, 0, 0, 0);
-        AEVO = IAevo(_perpDexAddress);
+        perpDexProxy = IPerpDexProxy(_perpDexAddress);
         perpDexAsset = _perpDexAsset;
         perpDexReceiver = _perpDexReceiver;
         perpDexConnector = _perpDexConnector;
@@ -83,9 +83,9 @@ contract RockOnyxOptionStrategy is RockOnyxAccessControl, ReentrancyGuard {
         bytes memory data = "";
         uint256 amount = optionsState.unAllocatedUsdcBalance;
         optionsState.unAllocatedUsdcBalance -= amount;
-        IERC20(perpDexAsset).approve(address(AEVO), amount);
+        IERC20(perpDexAsset).approve(address(perpDexProxy), amount);
 
-        AEVO.depositToAppChain{value: msg.value}(
+        perpDexProxy.depositToAppChain{value: msg.value}(
             perpDexReceiver,
             perpDexAsset,
             amount,

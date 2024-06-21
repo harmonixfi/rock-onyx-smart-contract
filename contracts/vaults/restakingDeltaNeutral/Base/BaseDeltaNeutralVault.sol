@@ -110,7 +110,6 @@ abstract contract BaseDeltaNeutralVault is
                 getFee(address(transitToken), address(vaultParams.asset))
             );
         }
-
         uint256 shares = _issueShares(amount);
         depositReceipts[msg.sender].shares += shares;
         depositReceipts[msg.sender].depositAmount += amount;

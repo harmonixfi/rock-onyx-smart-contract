@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-interface IAevo {
+interface IPerpDexProxy {
     function depositToAppChain(
         address receiver,
         address asset,
@@ -19,4 +19,10 @@ interface IAevo {
         uint32 l2Gas,
         bytes memory data
     ) external payable;
+
+    function deposit(
+        address receiver, 
+        address tokenAddress, 
+        uint128 amount
+    ) external;
 }
