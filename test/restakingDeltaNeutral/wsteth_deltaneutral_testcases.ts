@@ -104,8 +104,8 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       wstethAddress,
       BigInt(1 * 1e6),
       await uniSwapContract.getAddress(),
-      [usdcAddress, wstethAddress,  usdtAddress],
-      [wethAddress, wethAddress, usdcAddress],
+      [wethAddress, wstethAddress,  usdtAddress],
+      [usdcAddress, wethAddress, usdcAddress],
       [500, 100, 100]
     );
     await wstEthStakingDNVault.waitForDeployment();
