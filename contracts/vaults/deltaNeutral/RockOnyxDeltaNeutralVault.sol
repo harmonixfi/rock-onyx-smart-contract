@@ -63,7 +63,7 @@ contract RockOnyxDeltaNeutralVault is
         address _weth,
         address _wstEth,
         uint256 _initialPPS,
-        address _uniSwapProxy,
+        address _baseSwapProxy,
         address[] memory _token0s,
         address[] memory _token1s,
         uint24[] memory _fees
@@ -76,7 +76,7 @@ contract RockOnyxDeltaNeutralVault is
         _grantRole(ROCK_ONYX_OPTIONS_TRADER_ROLE, _admin);
         _grantRole(ROCK_ONYX_OPTIONS_TRADER_ROLE, _perpDexReceiver);
 
-        baseSwapVault_Initialize(_uniSwapProxy, _token0s, _token1s, _fees);
+        baseSwapVault_Initialize(_baseSwapProxy, _token0s, _token1s, _fees);
         ethStakeLend_Initialize(_swapProxy, _usdc, _weth, _wstEth);
         perpDex_Initialize(_perpDexProxy, _perpDexReceiver, _usdc);
         initialPPS = _initialPPS;

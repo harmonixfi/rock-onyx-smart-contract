@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../../interfaces/IAevo.sol";
+import "../../../interfaces/IPerpDexProxy.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
 import "../../../interfaces/IOptionsVendorProxy.sol";
 import "../structs/DeltaNeutralStruct.sol";
