@@ -11,13 +11,11 @@ struct VaultParams {
 }
 
 struct VaultState {
-    uint256 performanceFeeAmount;
-    uint256 managementFeeAmount;
-    uint256 currentRoundFeeAmount;
     uint256 withdrawPoolAmount;
     uint256 pendingDepositAmount;
     uint256 totalShares;
-    uint256 lastLockedAmount;
+    uint256 totalFeePoolAmount;
+    uint256 lastUpdateManagementFeeDate;
 }
 
 struct OptionsStrategyState {
