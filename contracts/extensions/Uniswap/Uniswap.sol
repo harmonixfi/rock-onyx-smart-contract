@@ -21,7 +21,6 @@ contract UniSwap is BaseSwap {
         swapRouter = IUniSwapRouter(_swapRouterAddress);
         swapRouterOnBase = IUniSwapRouterOnBase(_swapRouterAddress);
         network = _network;
-        console.log("aaa", uint(network));
     }
 
     function swapTo(
