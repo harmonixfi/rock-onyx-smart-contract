@@ -97,6 +97,11 @@ contract KelpDaoProxy is BaseKelpRenzoProxy, BaseSwapVault {
         updateAdmin(_adminNew);
     }
 
+    function updateKelpPool(address _kelpWithdrawRestakingPoolAddress) external {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+        updateKelpWithdrawRestakingPool(_kelpWithdrawRestakingPoolAddress);
+    }
+
     function getRestakingTokenCurrent() external view returns (address) {
         return address(restakingToken);
     }

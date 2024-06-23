@@ -6,13 +6,15 @@ import "../../../../interfaces/IZircuitRestakeProxy.sol";
 import "../../../../interfaces/IWETH.sol";
 import "./../../Base/strategies/BaseRestakingStrategy.sol";
 import "./../../Base/BaseSwapVault.sol";
+import "../KelpDaoProxy/KelpDaoProxy.sol";
 
 contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
     IWithdrawRestakingPool private kelpWithdrawRestakingPool;
-    IKelpRestakeProxy private kelpRestakeProxy;
     IZircuitRestakeProxy private zircuitRestakeProxy;
+    IKelpRestakeProxy private kelpRestakeProxy;
     IERC20 private stakingToken;
     string private refId;
+    KelpDaoProxy private kelpDaoProxy;
 
     function ethRestaking_Initialize(
         address _restakingToken,
@@ -29,7 +31,12 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
 
         refId = _refId;
         kelpRestakeProxy = IKelpRestakeProxy(_restakingPoolAddresses[0]);
-        zircuitRestakeProxy = IZircuitRestakeProxy(_restakingPoolAddresses[1]);
+        kelpDaoProxy = new KelpDaoProxy(
+            _restakingPoolAddresses[0],
+            _restakingPoolAddresses[1],
+            address(ethToken)
+        );
+        // kelpDaoProxy = IKelpDaoProxy(address(this));
     }
 
     function syncRestakingBalance() internal override{
@@ -50,7 +57,7 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
             // kelpRestakeProxy.swapToRsETH{value: ethAmount}(0, refId);
 
             // ethereum
-            kelpRestakeProxy.depositETH{value: ethAmount}(0, refId);
+            kelpDaoProxy.depositToRestakingProxy{value: ethAmount}(refId);
         }else{
             ethToken.approve(address(swapProxy), ethAmount);
             swapProxy.swapTo(
@@ -63,8 +70,12 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
         }
         
         if(address(zircuitRestakeProxy) != address(0)){
-            restakingToken.approve(address(zircuitRestakeProxy), restakingToken.balanceOf(address(this)));
-            zircuitRestakeProxy.depositFor(address(restakingToken), address(this), restakingToken.balanceOf(address(this)));
+            IERC20(restakingToken).transferFrom(
+                address(this),
+                address(kelpDaoProxy),
+                restakingToken.balanceOf(address(this))
+            );
+            kelpDaoProxy.depositForZircuit();
         }
     }
 
@@ -73,12 +84,12 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
         uint256 stakingTokenAmount = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
         
         if(address(zircuitRestakeProxy) != address(0)){
-            zircuitRestakeProxy.withdraw(address(restakingToken), stakingTokenAmount);
+            kelpDaoProxy.withdrawFromZircuitRestakingProxy(stakingTokenAmount, address(this));
         }
 
         if(address(kelpRestakeProxy) != address(0) && address(kelpWithdrawRestakingPool) != address(0)) {
             restakingToken.approve(address(swapProxy), stakingTokenAmount);
-            kelpWithdrawRestakingPool.withdraw(address(restakingToken), stakingTokenAmount);
+            kelpDaoProxy.withdrawFromKelpRestakePool(stakingTokenAmount, address(this));
         }else{
             restakingToken.approve(address(swapProxy), stakingTokenAmount);
             swapProxy.swapToWithOutput(

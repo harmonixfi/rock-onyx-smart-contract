@@ -24,7 +24,7 @@ abstract contract BaseKelpRenzoProxy is ReentrancyGuard, RockOnyxAccessControl {
         _grantRole(ROCK_ONYX_ADMIN_ROLE, _admin);
     }
 
-    function updateKelpWithdrawRestaking (address _kelpWithdrawRestakingPoolAddress) external nonReentrant {
+    function updateKelpWithdrawRestakingPool (address _kelpWithdrawRestakingPoolAddress) internal nonReentrant {
         kelpWithdrawRestakingPool = IWithdrawRestakingPool(_kelpWithdrawRestakingPoolAddress);
     }
 
