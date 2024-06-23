@@ -106,11 +106,13 @@ contract WstEthStakingDeltaNeutralVault is
         syncPerpDexBalance(perpDexbalance);
     }
 
-    function allocatedRatio() external view returns (uint256, uint256) {
-        uint256 totalRestakingPerpDexBalance = getTotalRestakingTvl() + getTotalPerpDexTvl();
-        uint256 ethStakeLendRatio =  getTotalRestakingTvl() * 1e4 / totalRestakingPerpDexBalance;
-        uint256 perpDexRatio =  getTotalPerpDexTvl() * 1e4 / totalRestakingPerpDexBalance;
-        return (ethStakeLendRatio, perpDexRatio);
+    function _allocatedRatio() internal override view returns (uint256, uint256) {
+        if(_totalValueLocked() == 0){
+            return (5000, 5000);  
+        }
+
+        uint256 tvl = getTotalRestakingTvl() + getTotalPerpDexTvl();
+        return (getTotalRestakingTvl() * 1e4 / tvl, getTotalPerpDexTvl() * 1e4 / tvl);
     }
 
     /**
@@ -121,8 +123,7 @@ contract WstEthStakingDeltaNeutralVault is
             vaultState.pendingDepositAmount +
             vaultState.withdrawPoolAmount +
             getTotalRestakingTvl() +
-            getTotalPerpDexTvl() -
-            vaultState.managementFeeAmount;
+            getTotalPerpDexTvl();
     }
 
     /**

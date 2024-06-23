@@ -124,7 +124,6 @@ contract RenzoRestakingDeltaNeutralVault is
         syncPerpDexBalance(perpDexbalance);
     }
 
-
     function _allocatedRatio() internal override view returns (uint256, uint256) {
         if(_totalValueLocked() == 0){
             return (5000, 5000);  
