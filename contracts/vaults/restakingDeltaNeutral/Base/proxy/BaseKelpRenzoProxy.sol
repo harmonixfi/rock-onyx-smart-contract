@@ -7,6 +7,7 @@ import "../../../../extensions/Uniswap/Uniswap.sol";
 import "../../../../interfaces/IWithdrawRestakingPool.sol";
 import "../../../../interfaces/IKelpRestakeProxy.sol";
 import "../../../../extensions/RockOnyxAccessControl.sol";
+import "../../structs/RestakingDeltaNeutralStruct.sol";
 
 abstract contract BaseKelpRenzoProxy is ReentrancyGuard, RockOnyxAccessControl {
     IZircuitRestakeProxy internal zircuitRestakeProxy;
@@ -15,6 +16,7 @@ abstract contract BaseKelpRenzoProxy is ReentrancyGuard, RockOnyxAccessControl {
     IERC20 internal ethToken;
     IWithdrawRestakingPool internal kelpWithdrawRestakingPool;
     address internal admin;
+    mapping (address => uint256) sender;
 
     function baseKelpRenzoProxyInit(address _admin, address _addressContractKelpRestake, address _addressContractZircuit, address _ethToken) internal virtual {
         zircuitRestakeProxy = IZircuitRestakeProxy(_addressContractZircuit);
@@ -47,7 +49,7 @@ abstract contract BaseKelpRenzoProxy is ReentrancyGuard, RockOnyxAccessControl {
         _grantRole(ROCK_ONYX_ADMIN_ROLE, admin);
     }
 
-    function getAdminCurrent() external virtual view returns(address) {}
+    function getAdminCurrentAddress() external virtual view returns(address) {}
 
     function updateRestakingToken(address _restakingToken) external nonReentrant {
         restakingToken = IERC20(_restakingToken);

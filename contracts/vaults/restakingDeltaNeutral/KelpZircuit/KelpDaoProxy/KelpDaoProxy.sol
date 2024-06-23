@@ -9,7 +9,7 @@ import "../../../../extensions/Uniswap/Uniswap.sol";
 import "../../Base/BaseSwapVault.sol";
 import "../../Base/proxy/BaseKelpRenzoProxy.sol";
 
-contract KelpDaoProxy is BaseKelpRenzoProxy, BaseSwapVault {
+contract KelpDaoProxy is BaseKelpRenzoProxy {
     constructor(
         address _addressContractKelpRestake,
         address _addressContractZircuit,
@@ -45,6 +45,7 @@ contract KelpDaoProxy is BaseKelpRenzoProxy, BaseSwapVault {
             address(kelpRestakeProxy) != address(0),
             "INVALID_ADDRESS_KELP_RESTAKING_0x"
         );
+        sender[msg.sender] += msg.value;
         // ethereum
         kelpRestakeProxy.depositETH{value: msg.value}(0, refId);
     }
@@ -54,6 +55,7 @@ contract KelpDaoProxy is BaseKelpRenzoProxy, BaseSwapVault {
         address addressReceive
     ) external override {
         _auth(ROCK_ONYX_ADMIN_ROLE);
+        sender[msg.sender] -= amount;
         zircuitRestakeProxy.withdraw(address(restakingToken), amount);
         withdrawBack(restakingToken, addressReceive, amount);
     }
@@ -102,16 +104,20 @@ contract KelpDaoProxy is BaseKelpRenzoProxy, BaseSwapVault {
         updateKelpWithdrawRestakingPool(_kelpWithdrawRestakingPoolAddress);
     }
 
-    function getRestakingTokenCurrent() external view returns (address) {
+    function getRestakingTokenCurrentAddress() external view returns (address) {
         return address(restakingToken);
     }
 
-    function getAdminCurrent() external view override returns (address) {
+    function getAdminCurrentAddress() external view override returns (address) {
         return admin;
     }
 
     function getKelpRestakeProxy() external view returns (address) {
         return address(kelpRestakeProxy);
+    }
+
+    function getBalanceCurrentByToken(IERC20 token) external view returns (uint256) {
+        return token.balanceOf(address(this));
     }
 
     receive() external payable {}
