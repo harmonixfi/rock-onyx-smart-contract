@@ -89,7 +89,8 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     uniSwapContract = await factory.deploy(
       admin,
       swapRouterAddress,
-      priceConsumerContract.getAddress()
+      priceConsumerContract.getAddress(),
+      chainId
     );
     await uniSwapContract.waitForDeployment();
 
