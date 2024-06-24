@@ -75,7 +75,8 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     uniSwapContract = await factory.deploy(
       admin,
       uniSwapRouterAddress,
-      priceConsumerContract.getAddress()
+      priceConsumerContract.getAddress(),
+      chainId
     );
     await uniSwapContract.waitForDeployment();
 
