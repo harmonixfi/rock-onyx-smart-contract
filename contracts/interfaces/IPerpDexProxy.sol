@@ -20,9 +20,9 @@ interface IPerpDexProxy {
         bytes memory data
     ) external payable;
 
-    function deposit(
-        address receiver, 
+    function depositRaw(
+        address recipient, 
         address tokenAddress, 
-        uint128 amount
+        uint128 rawAmount
     ) external;
 }
