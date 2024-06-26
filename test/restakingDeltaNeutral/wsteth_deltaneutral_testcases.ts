@@ -584,33 +584,207 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     );
   });
 
-  it.skip("migrate and open position on chain -> ", async function () {
+  it("migrate and open position on chain -> ", async function () {
     console.log("-------------open position on chain---------------");
     const contractAdmin = await ethers.getImpersonatedSigner("0x39c76363E9514a7D11976d963B09b7588B5DFBf3");
-    const operator = await ethers.getImpersonatedSigner("0xe2ee4c2ccf64b7660877c0433e5F43Cd0B86d7bE");
     const contractAddress = '0x09f2b45a6677858f016EBEF1E8F141D6944429DF';
-    const contract = await ethers.getContractAt("WstEthStakingDeltaNeutralVault", contractAddress);
-    const tx0 = await admin.sendTransaction({
-      to: operator,
-      value: ethers.parseEther("0.5")
-  });
-    console.log("-------------open position---------------");
-    let openPositionTx1 = await contract
-      .connect(operator)
-      .openPosition(BigInt(0.01 * 1e18));
-    await openPositionTx1.wait();
-
+    const exportABI = [{
+        "inputs": [],
+        "name": "exportVaultState",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "shares",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "depositAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct DepositReceipt",
+                "name": "depositReceipt",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct DepositReceiptArr[]",
+            "name": "",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "shares",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "pps",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "profit",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "performanceFee",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "withdrawAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct Withdrawal",
+                "name": "withdrawal",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct WithdrawalArr[]",
+            "name": "",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint8",
+                "name": "decimals",
+                "type": "uint8"
+              },
+              {
+                "internalType": "address",
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minimumSupply",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "cap",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "performanceFeeRate",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "managementFeeRate",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct VaultParams",
+            "name": "",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "withdrawPoolAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "pendingDepositAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "totalShares",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "totalFeePoolAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "lastUpdateManagementFeeDate",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct VaultState",
+            "name": "",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "unAllocatedBalance",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "totalBalance",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct EthRestakingState",
+            "name": "",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "unAllocatedBalance",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "perpDexBalance",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct PerpDexState",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }];
+    const contract = new ethers.Contract(contractAddress, exportABI, contractAdmin);
+    
     console.log("-------------export old vault state---------------");
     let exportVaultStateTx = await contract
     .connect(contractAdmin)
     .exportVaultState();
     
-    // console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
-    // console.log("WithdrawalArr %s", exportVaultStateTx[1]);
-    // console.log("VaultParams %s", exportVaultStateTx[2]);
-    // console.log("VaultState %s", exportVaultStateTx[3]);
-    // console.log("EthRestakingState %s", exportVaultStateTx[4]);
-    // console.log("PerpDexState %s", exportVaultStateTx[5]);
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
     
     console.log("-------------import vault state---------------");
     const _depositReceiptArr = exportVaultStateTx[0].map((element: any[][]) => {
@@ -706,32 +880,5 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     console.log("VaultState %s", exportVaultStateTx[3]);
     console.log("EthRestakingState %s", exportVaultStateTx[4]);
     console.log("PerpDexState %s", exportVaultStateTx[5]);
-
-    await usdc
-      .connect(user1)
-      .approve(await newContract.getAddress(), 10*1e6);
-    await newContract.connect(user1).deposit(10*1e6, usdc, usdc);
-
-    await usdc
-      .connect(user2)
-      .approve(await newContract.getAddress(), 100*1e6);
-    await newContract.connect(user2).deposit(100*1e6, usdc, usdc);
-
-    console.log("-------------deposit to vendor on aevo---------------");
-    await newContract.connect(admin).depositToVendor();
-
-    console.log("-------------open position---------------");
-    let openPositionTx = await newContract
-      .connect(admin)
-      .openPosition(BigInt(0.01 * 1e18));
-    await openPositionTx.wait();
-
-    const usdcSigner = await ethers.getImpersonatedSigner(usdcImpersonatedSigner);
-    await transferForUser(usdc, usdcSigner, await newContract.getAddress(), 1000 * 1e6);
-    console.log("new contract balance %s", await usdc.balanceOf(await newContract.getAddress()));
-    openPositionTx = await newContract
-      .connect(admin)
-      .openPosition(BigInt(0.01 * 1e18));
-    await openPositionTx.wait();
   });
 });
