@@ -176,10 +176,28 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     const usdcSigner = await ethers.getImpersonatedSigner(usdcImpersonatedSigner);
     const usdtSigner = await ethers.getImpersonatedSigner(usdtImpersonatedSigner);
 
-    await transferForUser(usdc, usdcSigner, user1, 1000 * 1e6);
+    await transferForUser(usdc, usdcSigner, user1, 10000 * 1e6);
     await transferForUser(usdc, usdcSigner, admin, 1000 * 1e6);
     await transferForUser(usdc, usdcSigner, user2, 1000 * 1e6);
     await transferForUser(usdt, usdtSigner, user2, 1000 * 1e6);
+  });
+
+  it("user deposit -> withdraw", async function () {
+    console.log(
+      "-------------deposit to restakingDeltaNeutralVault---------------"
+    );
+    await deposit(user1, 10 * 1e6, usdc, usdc);
+    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await deposit(user1, 50 * 1e6, usdc, usdc);
+    await deposit(user1, 1350 * 1e6, usdc, usdc);
+    await deposit(user1, 10 * 1e6, usdc, usdc);
+    await deposit(user1, 10 * 1e6, usdc, usdc);
+    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    console.log("-------------open position---------------");
+    let openPositionTx1 = await wstEthStakingDNVault
+      .connect(admin)
+      .openPosition(BigInt(0.01 * 1e18));
+    await openPositionTx1.wait();
   });
 
   it.skip("user deposit -> withdraw", async function () {
@@ -218,7 +236,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost,PRECISION);
   });
 
-  it.skip("user deposit -> deposit to perp dex -> deposit to kelp -> deposit to zircuit", async function () {
+  it.skip("user deposit -> deposit to perp dex -> open possition", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -564,5 +582,156 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       BigInt(parseInt((expectedUser2Balance * 1e6).toString())),
       PRECISION
     );
+  });
+
+  it.skip("migrate and open position on chain -> ", async function () {
+    console.log("-------------open position on chain---------------");
+    const contractAdmin = await ethers.getImpersonatedSigner("0x39c76363E9514a7D11976d963B09b7588B5DFBf3");
+    const operator = await ethers.getImpersonatedSigner("0xe2ee4c2ccf64b7660877c0433e5F43Cd0B86d7bE");
+    const contractAddress = '0x09f2b45a6677858f016EBEF1E8F141D6944429DF';
+    const contract = await ethers.getContractAt("WstEthStakingDeltaNeutralVault", contractAddress);
+    const tx0 = await admin.sendTransaction({
+      to: operator,
+      value: ethers.parseEther("0.5")
+  });
+    console.log("-------------open position---------------");
+    let openPositionTx1 = await contract
+      .connect(operator)
+      .openPosition(BigInt(0.01 * 1e18));
+    await openPositionTx1.wait();
+
+    console.log("-------------export old vault state---------------");
+    let exportVaultStateTx = await contract
+    .connect(contractAdmin)
+    .exportVaultState();
+    
+    // console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    // console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    // console.log("VaultParams %s", exportVaultStateTx[2]);
+    // console.log("VaultState %s", exportVaultStateTx[3]);
+    // console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    // console.log("PerpDexState %s", exportVaultStateTx[5]);
+    
+    console.log("-------------import vault state---------------");
+    const _depositReceiptArr = exportVaultStateTx[0].map((element: any[][]) => {
+      return {
+        owner: element[0],
+        depositReceipt: {
+          shares: element[1][0],
+          depositAmount: element[1][1],
+        },
+      };
+    });
+    const _withdrawalArr = exportVaultStateTx[1].map((element: any[][]) => {
+      return {
+        owner: element[0],
+        withdrawal: {
+          shares: element[1][0],
+          pps: element[1][1],
+          profit: element[1][2],
+          performanceFee: element[1][3],
+          withdrawAmount: element[1][4],
+        },
+      };
+    });
+    const _vaultParams = {
+      decimals: exportVaultStateTx[2][0],
+      asset: exportVaultStateTx[2][1],
+      minimumSupply: exportVaultStateTx[2][2],
+      cap: exportVaultStateTx[2][3],
+      performanceFeeRate: exportVaultStateTx[2][4],
+      managementFeeRate: exportVaultStateTx[2][5],
+    };
+    const _vaultState = {
+      withdrawPoolAmount: exportVaultStateTx[3][2],
+      pendingDepositAmount: exportVaultStateTx[3][3],
+      totalShares: exportVaultStateTx[3][4],
+      totalFeePoolAmount: exportVaultStateTx[3][0] + exportVaultStateTx[3][1],
+      lastUpdateManagementFeeDate: (await ethers.provider.getBlock('latest')).timestamp,
+    };
+    const _ethStakeLendState = {
+      unAllocatedBalance: exportVaultStateTx[4][0],
+      totalBalance: exportVaultStateTx[4][1],
+    };
+    const _perpDexState = {
+      unAllocatedBalance: exportVaultStateTx[5][0],
+      perpDexBalance: exportVaultStateTx[5][1],
+    };
+
+    const newContractFactory = await ethers.getContractFactory("WstEthStakingDeltaNeutralVault");
+
+    const newContract = await newContractFactory.deploy(
+      admin,
+      usdcAddress,
+      6,
+      BigInt(5 * 1e6),
+      BigInt(1000000 * 1e6),
+      networkCost,
+      wethAddress,
+      perDexAddress,
+      perDexRecipientAddress,
+      perDexConnectorAddress,
+      wstethAddress,
+      BigInt(1 * 1e6),
+      await uniSwapContract.getAddress(),
+      [wethAddress, wstethAddress,  usdtAddress],
+      [usdcAddress, wethAddress, usdcAddress],
+      [500, 100, 100]
+    );
+    await newContract.waitForDeployment();
+
+    console.log(
+      "deploy wstEthStakingDNVault successfully: %s",
+      await newContract.getAddress()
+    );
+
+    const importVaultStateTx = await newContract
+      .connect(admin)
+      .importVaultState(
+        _depositReceiptArr,
+        _withdrawalArr,
+        _vaultParams,
+        _vaultState,
+        _ethStakeLendState,
+        _perpDexState
+      );
+    console.log("-------------export new vault state---------------");
+    exportVaultStateTx = await newContract
+    .connect(admin)
+    .exportVaultState();
+
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
+
+    await usdc
+      .connect(user1)
+      .approve(await newContract.getAddress(), 10*1e6);
+    await newContract.connect(user1).deposit(10*1e6, usdc, usdc);
+
+    await usdc
+      .connect(user2)
+      .approve(await newContract.getAddress(), 100*1e6);
+    await newContract.connect(user2).deposit(100*1e6, usdc, usdc);
+
+    console.log("-------------deposit to vendor on aevo---------------");
+    await newContract.connect(admin).depositToVendor();
+
+    console.log("-------------open position---------------");
+    let openPositionTx = await newContract
+      .connect(admin)
+      .openPosition(BigInt(0.01 * 1e18));
+    await openPositionTx.wait();
+
+    const usdcSigner = await ethers.getImpersonatedSigner(usdcImpersonatedSigner);
+    await transferForUser(usdc, usdcSigner, await newContract.getAddress(), 1000 * 1e6);
+    console.log("new contract balance %s", await usdc.balanceOf(await newContract.getAddress()));
+    openPositionTx = await newContract
+      .connect(admin)
+      .openPosition(BigInt(0.01 * 1e18));
+    await openPositionTx.wait();
   });
 });
