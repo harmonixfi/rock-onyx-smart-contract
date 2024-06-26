@@ -21,7 +21,8 @@ async function deployUniSwapContract() {
     uniSwapContract = await factory.deploy(
       admin,
       swapRouterAddress,
-      priceConsumerAddress
+      priceConsumerAddress,
+      chainId
     );
     await uniSwapContract.waitForDeployment();
 

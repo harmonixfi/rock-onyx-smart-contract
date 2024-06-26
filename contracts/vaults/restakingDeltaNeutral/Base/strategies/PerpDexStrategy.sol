@@ -89,7 +89,7 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuard {
         perpDexState.unAllocatedBalance -= amount;
         IERC20(perpDexAsset).approve(address(perpDexProxy), amount);
 
-        perpDexProxy.deposit(perpDexReceiver, perpDexAsset, uint128(amount));
+        perpDexProxy.depositRaw(perpDexReceiver, perpDexAsset, uint128(amount));
 
         perpDexState.perpDexBalance += amount;
         emit PerpDexVendorDeposited(amount);
