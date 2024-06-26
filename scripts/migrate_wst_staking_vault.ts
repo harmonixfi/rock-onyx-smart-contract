@@ -14,7 +14,6 @@ async function main() {
     console.log('-------------migration contract---------------');
     const oldAdmin = new ethers.Wallet(oldPrivateKey, ethers.provider);
     console.log("old admin address %s", await oldAdmin.getAddress());
-    const contractAdmin = await ethers.getImpersonatedSigner("0x39c76363E9514a7D11976d963B09b7588B5DFBf3");
     const oldVaultAddress = '0x09f2b45a6677858f016EBEF1E8F141D6944429DF';
     const exportABI = [{
         "inputs": [],
@@ -209,10 +208,15 @@ async function main() {
 
     console.log("-------------export old vault state---------------");
     let exportVaultStateTx = await oldContract
-      .connect(oldAdmin)
-      .exportVaultState();
+    .connect(oldAdmin)
+    .exportVaultState();
   
-    console.log(exportVaultStateTx);
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
     
     console.log("-------------import vault state---------------");
     const _depositReceiptArr = exportVaultStateTx[0].map((element: any[][]) => {
@@ -245,13 +249,11 @@ async function main() {
       managementFeeRate: exportVaultStateTx[2][5],
     };
     const _vaultState = {
-      performanceFeeAmount: exportVaultStateTx[3][0],
-      managementFeeAmount: exportVaultStateTx[3][1],
       withdrawPoolAmount: exportVaultStateTx[3][2],
       pendingDepositAmount: exportVaultStateTx[3][3],
       totalShares: exportVaultStateTx[3][4],
-      withdrawFeePoolAmount: 0,
-      lastUpdateManagementFeeDate: 0
+      totalFeePoolAmount: exportVaultStateTx[3][0] + exportVaultStateTx[3][1],
+      lastUpdateManagementFeeDate: (await ethers.provider.getBlock('latest')).timestamp,
     };
     const _ethStakeLendState = {
       unAllocatedBalance: exportVaultStateTx[4][0],
@@ -273,12 +275,17 @@ async function main() {
         _perpDexState
       );
       
-    console.log("-------------export new vault state---------------");
-    exportVaultStateTx = await newContract
-      .connect(newAdmin)
+      console.log("-------------export new vault state---------------");
+      exportVaultStateTx = await newContract
+      .connect(oldAdmin)
       .exportVaultState();
   
-    console.log(exportVaultStateTx);
+      console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+      console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+      console.log("VaultParams %s", exportVaultStateTx[2]);
+      console.log("VaultState %s", exportVaultStateTx[3]);
+      console.log("EthRestakingState %s", exportVaultStateTx[4]);
+      console.log("PerpDexState %s", exportVaultStateTx[5]);
   }
 main().catch((error) => {
     console.error(error);
