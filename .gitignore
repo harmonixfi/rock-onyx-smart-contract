@@ -32,3 +32,4 @@ contracts/vaults/stableUsdc/artifacts
 .states
 hardhat.config.ts
 contracts/vaults/restakingDeltaNeutral/KelpZircuit/artifacts
+metrics
