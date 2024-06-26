@@ -203,7 +203,7 @@ async function main() {
 
     const newAdmin = new ethers.Wallet(privateKey, ethers.provider);
     console.log("new admin address %s", await newAdmin.getAddress());
-    const newVaultAddress = "";
+    const newVaultAddress = "0x99CD3fd86303eEfb71D030e6eBfA12F4870bD01F";
     const newContract = await ethers.getContractAt("WstEthStakingDeltaNeutralVault", newVaultAddress);
 
     console.log("-------------export old vault state---------------");
@@ -249,10 +249,10 @@ async function main() {
       managementFeeRate: exportVaultStateTx[2][5],
     };
     const _vaultState = {
-      withdrawPoolAmount: exportVaultStateTx[3][2],
-      pendingDepositAmount: exportVaultStateTx[3][3],
-      totalShares: exportVaultStateTx[3][4],
-      totalFeePoolAmount: exportVaultStateTx[3][0] + exportVaultStateTx[3][1],
+      withdrawPoolAmount: exportVaultStateTx[3][0],
+      pendingDepositAmount: exportVaultStateTx[3][1],
+      totalShares: exportVaultStateTx[3][2],
+      totalFeePoolAmount: exportVaultStateTx[3][3],
       lastUpdateManagementFeeDate: (await ethers.provider.getBlock('latest')).timestamp,
     };
     const _ethStakeLendState = {

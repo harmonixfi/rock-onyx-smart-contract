@@ -26,7 +26,7 @@ const uniSwapAddress = UNI_SWAP_ADDRESS[chainId] || "";
 const networkCost = BigInt(Number(NETWORK_COST[chainId]) * 1e6);
 
 const admin = '0x39c76363E9514a7D11976d963B09b7588B5DFBf3';
-const perDexRecipientAddress = "0xe2ee4c2ccf64b7660877c0433e5F43Cd0B86d7bE";
+const perDexRecipientAddress = "0x84231f1cCeba8591239cD8f9b0C906DB38961Bd5";
 
 let wstEthStakingDNVault: Contracts.WstEthStakingDeltaNeutralVault;
 
