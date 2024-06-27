@@ -31,7 +31,7 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
     );
     event FeeRatesUpdated(uint256 performanceFee, uint256 managementFee);
 
-    constructor(
+    function initialize(
         address _admin,
         address _usdc,
         uint8 _decimals,
@@ -54,10 +54,7 @@ contract RockOnyxUSDTVault is BaseSwapVault, BaseRockOnyxOptionWheelVault {
         address[] memory _token0s,
         address[] memory _token1s,
         uint24[] memory _fees
-    )
-        RockOnyxEthLiquidityStrategy()
-        RockOnyxOptionStrategy()
-        RockOynxUsdLiquidityStrategy()
+    ) public
     {
         _grantRole(ROCK_ONYX_ADMIN_ROLE, _admin);
         _grantRole(ROCK_ONYX_OPTIONS_TRADER_ROLE, _admin);

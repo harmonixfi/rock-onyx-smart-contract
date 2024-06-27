@@ -248,6 +248,7 @@ export const UNI_SWAP_ADDRESS: { [key in CHAINID]?: string } = {
 
 export const NETWORK_COST: { [key in CHAINID]?: string } = {
   [CHAINID.ETH_MAINNET]: "5",
+  [CHAINID.ETH_SEPOLIA]: "5",
   [CHAINID.ARBITRUM_MAINNET]: "1",
   [CHAINID.BASE_MAINNET]: "1",
 };

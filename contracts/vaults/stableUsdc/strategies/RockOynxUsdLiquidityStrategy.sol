@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
 import "../../../lib/LiquidityAmounts.sol";
 import "../../../interfaces/IVenderLiquidityProxy.sol";
@@ -15,16 +15,12 @@ import "hardhat/console.sol";
 contract RockOynxUsdLiquidityStrategy is
     BaseLiquidityStrategy,
     RockOnyxAccessControl,
-    ReentrancyGuard
+    ReentrancyGuardUpgradeable
 {
     using LiquidityAmounts for uint256;
 
     address usdce;
     UsdLPState usdLPState;
-
-    constructor() {
-        usdLPState = UsdLPState(0, 0, 0, 0, 0, 0);
-    }
 
     function usdLP_Initialize(
         address _usdLPProviderAddress,
@@ -33,6 +29,7 @@ contract RockOynxUsdLiquidityStrategy is
         address _usdc,
         address _usdce
     ) internal {
+        usdLPState = UsdLPState(0, 0, 0, 0, 0, 0);
         usdce = _usdce;
         BaseLP_Initialize(_usdLPProviderAddress, _usdNftPositionAddress, _swapAddress, _usdc);
     }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
 import "../../../lib/LiquidityAmounts.sol";
 import "../../../interfaces/IVenderLiquidityProxy.sol";
@@ -13,10 +13,7 @@ import "../structs/RockOnyxStructs.sol";
 import "./BaseLiquidityStrategy.sol";
 import "hardhat/console.sol";
 
-contract RockOnyxEthLiquidityStrategy is
-    BaseLiquidityStrategy,
-    RockOnyxAccessControl,
-    ReentrancyGuard
+contract RockOnyxEthLiquidityStrategy is BaseLiquidityStrategy,RockOnyxAccessControl,ReentrancyGuardUpgradeable
 {
     using LiquidityAmounts for uint256;
     IRewardVendor internal ethReward;
@@ -30,10 +27,6 @@ contract RockOnyxEthLiquidityStrategy is
      *  EVENTS
      ***********************************************/
 
-    constructor() {
-        ethLPState = EthLPState(0, 0, 0, 0, 0);
-    }
-
     function ethLP_Initialize(
         address _liquidityProviderAddress,
         address _rewardAddress,
@@ -44,6 +37,7 @@ contract RockOnyxEthLiquidityStrategy is
         address _wstEth,
         address _arb
     ) internal {
+        ethLPState = EthLPState(0, 0, 0, 0, 0);
         ethReward = IRewardVendor(_rewardAddress);
         usd = _usd;
         weth = _weth;
