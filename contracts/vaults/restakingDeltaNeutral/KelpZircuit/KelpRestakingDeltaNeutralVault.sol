@@ -11,7 +11,7 @@ contract KelpRestakingDeltaNeutralVault is
     PerpDexStrategy,
     BaseDeltaNeutralVault
 {
-    constructor(
+    function initialize(
         address _admin,
         address _usdc,
         uint8 _decimals,
@@ -30,11 +30,7 @@ contract KelpRestakingDeltaNeutralVault is
         address[] memory _token0s,
         address[] memory _token1s,
         uint24[] memory _fees
-    )
-        KelpZircuitRestakingStrategy()
-        PerpDexStrategy()
-        BaseDeltaNeutralVault()
-    {
+    ) public {
         baseDeltaNeutralVault_Initialize(_admin, _usdc, _decimals, _minimumSupply, _cap, _networkCost, _initialPPS, _swapProxy, _token0s, _token1s, _fees);
         ethRestaking_Initialize(_restakingToken, _usdc, _weth, _stakingProxies, _refId, _swapProxy, _token0s, _token1s, _fees);
         perpDex_Initialize(_perpDexAddress, _perpDexReceiver, _usdc, _perpDexConnector);

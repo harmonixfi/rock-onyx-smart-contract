@@ -50,7 +50,7 @@ contract RockOnyxDeltaNeutralVault is
         uint256 shares
     );
 
-    constructor(
+    function initialize(
         address _admin,
         address _usdc,
         uint8 _decimals,
@@ -67,11 +67,13 @@ contract RockOnyxDeltaNeutralVault is
         address[] memory _token0s,
         address[] memory _token1s,
         uint24[] memory _fees
-    ) RockOynxEthStakeLendStrategy() RockOynxPerpDexStrategy() {
+    ) public {
         vaultParams = VaultParams(_decimals, _usdc, _minimumSupply, _cap, 10, 1);
         vaultState = VaultState(0, 0, 0, 0, 0);
         networkCost = _networkCost;
 
+        accessControl_Initialize();
+        
         _grantRole(ROCK_ONYX_ADMIN_ROLE, _admin);
         _grantRole(ROCK_ONYX_OPTIONS_TRADER_ROLE, _admin);
         _grantRole(ROCK_ONYX_OPTIONS_TRADER_ROLE, _perpDexReceiver);
