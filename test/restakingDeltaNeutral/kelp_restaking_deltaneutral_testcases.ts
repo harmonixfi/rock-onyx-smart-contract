@@ -104,34 +104,36 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     const kelpRestakingDeltaNeutralVault = await ethers.getContractFactory(
       "KelpRestakingDeltaNeutralVault"
     );
-
-    kelpRestakingDNVault = await kelpRestakingDeltaNeutralVault.deploy(
-      admin,
-      usdcAddress,
-      6,
-      BigInt(5 * 1e6),
-      BigInt(1000000 * 1e6),
-      networkCost,
-      wethAddress,
-      aevoAddress,
-      aevoRecipientAddress,
-      aevoConnectorAddress,
-      rsEthAddress,
-      BigInt(1 * 1e6),
-      [kelpDepositAddress, zircuitDepositAddress],
-      kelpDepositRefId,
-      await uniSwapContract.getAddress(),
-      [usdcAddress, rsEthAddress, usdtAddress, daiAddress],
-      [wethAddress, wethAddress, usdcAddress, usdtAddress],
-      // ethereum
-      // [500, 500, 100, 100]
-      // arbitrum
-      [500, 100, 100, 100]
+  
+    kelpRestakingDNVault = await upgrades.deployProxy(
+      kelpRestakingDeltaNeutralVault,
+      [
+        await admin.getAddress(),
+        usdcAddress,
+        6,
+        BigInt(5 * 1e6),
+        BigInt(1000000 * 1e6),
+        BigInt(1 * 1e6),
+        wethAddress,
+        aevoAddress,
+        aevoRecipientAddress,
+        aevoConnectorAddress,
+        rsEthAddress,
+        BigInt(1 * 1e6),
+        [kelpDepositAddress, zircuitDepositAddress],
+        kelpDepositRefId,
+        await uniSwapContract.getAddress(),
+        [usdcAddress, rsEthAddress, usdtAddress, daiAddress],
+        [wethAddress, wethAddress, usdcAddress, usdtAddress],
+        [500, 100, 100, 100],
+      ],
+      { initializer: "initialize" }
     );
+  
     await kelpRestakingDNVault.waitForDeployment();
-
+  
     console.log(
-      "deploy rockOnyxDeltaNeutralVaultContract successfully: %s",
+      "deploy kelpRestakingDNVault proxy successfully: %s",
       await kelpRestakingDNVault.getAddress()
     );
   }
@@ -150,6 +152,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
   });
 
   async function deposit(sender: Signer, amount: BigNumberish, token: Contracts.IERC20, tokenTransit: Contracts.IERC20) {
+    // console.log("kelpRestakingDNVault %s", kelpRestakingDNVault);
     await token
       .connect(sender)
       .approve(await kelpRestakingDNVault.getAddress(), amount);
@@ -158,7 +161,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
   }
 
   async function transferForUser(token: Contracts.IERC20, from: Signer, to: Signer, amount: BigNumberish) {
-    const transferTx = await token.connect(from).transfer(to, amount);
+    const transferTx = await token.connect(from).transfer(await to.getAddress(), amount);
     await transferTx.wait();
   }
 

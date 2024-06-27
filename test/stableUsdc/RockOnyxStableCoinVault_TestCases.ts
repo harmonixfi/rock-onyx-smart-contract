@@ -150,29 +150,34 @@ describe("RockOnyxStableCoinVault", function () {
       "RockOnyxUSDTVault"
     );
 
-    rockOnyxUSDTVaultContract = await rockOnyxUSDTVault.deploy(
-      await admin.getAddress(),
-      usdcAddress,
-      6,
-      BigInt(5 * 1e6),
-      BigInt(1000000 * 1e6),
-      networkCost,
-      await camelotLiquidityContract.getAddress(),
-      rewardAddress,
-      nftPositionAddress,
-      await camelotSwapContract.getAddress(),
-      aevoAddress,
-      await optionsReceiver.getAddress(),
-      aevoConnectorAddress,
-      usdceAddress,
-      wethAddress,
-      wstethAddress,
-      arbAddress,
-      BigInt(0 * 1e6),
-      await uniSwapContract.getAddress(),
-      [usdtAddress, daiAddress],
-      [usdcAddress, usdtAddress],
-      [100, 100]
+    
+    rockOnyxUSDTVaultContract = await upgrades.deployProxy(
+      rockOnyxUSDTVault,
+      [
+        await admin.getAddress(),
+        usdcAddress,
+        6,
+        BigInt(5 * 1e6),
+        BigInt(1000000 * 1e6),
+        networkCost,
+        await camelotLiquidityContract.getAddress(),
+        rewardAddress,
+        nftPositionAddress,
+        await camelotSwapContract.getAddress(),
+        aevoAddress,
+        await optionsReceiver.getAddress(),
+        aevoConnectorAddress,
+        usdceAddress,
+        wethAddress,
+        wstethAddress,
+        arbAddress,
+        BigInt(0 * 1e6),
+        await uniSwapContract.getAddress(),
+        [usdtAddress, daiAddress],
+        [usdcAddress, usdtAddress],
+        [100, 100],
+      ],
+      { initializer: "initialize" }
     );
     await rockOnyxUSDTVaultContract.waitForDeployment();
 

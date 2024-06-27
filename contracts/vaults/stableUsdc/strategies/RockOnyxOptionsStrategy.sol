@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/IPerpDexProxy.sol";
@@ -10,7 +10,7 @@ import "../../../interfaces/IOptionsVendorProxy.sol";
 import "../structs/RockOnyxStructs.sol";
 import "hardhat/console.sol";
 
-contract RockOnyxOptionStrategy is RockOnyxAccessControl, ReentrancyGuard {
+contract RockOnyxOptionStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     address perpDexAsset;

@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
 import "../../../extensions/Uniswap/Uniswap.sol";
 import "../../../lib/ShareMath.sol";
@@ -15,7 +15,7 @@ import "hardhat/console.sol";
 abstract contract BaseDeltaNeutralVault is
     BaseSwapVault,
     RockOnyxAccessControl,
-    ReentrancyGuard
+    ReentrancyGuardUpgradeable
 {
     uint256 internal initialPPS;
     uint256 internal networkCost;
@@ -60,6 +60,7 @@ abstract contract BaseDeltaNeutralVault is
         _grantRole(ROCK_ONYX_OPTIONS_TRADER_ROLE, _admin);
         
         baseSwapVault_Initialize(_swapAddress, _token0s, _token1s, _fees);
+        accessControl_Initialize();
     }
 
     function updateFee(

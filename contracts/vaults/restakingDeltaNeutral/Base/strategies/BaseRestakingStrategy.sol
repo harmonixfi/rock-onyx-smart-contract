@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "../../../../interfaces/IRestakingTokenHolder.sol";
 import "../../../../extensions/RockOnyxAccessControl.sol";
 import "../../../../extensions/Uniswap/Uniswap.sol";
@@ -11,7 +11,7 @@ import "./../../Base/BaseSwapVault.sol";
 import "../../structs/RestakingDeltaNeutralStruct.sol";
 import "hardhat/console.sol";
 
-abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl, ReentrancyGuard {
+abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     IERC20 usdcToken;
     IERC20 ethToken;
     IERC20 internal restakingToken;

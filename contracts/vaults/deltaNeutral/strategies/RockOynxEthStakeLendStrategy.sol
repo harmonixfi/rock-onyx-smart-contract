@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
 import "../../../lib/ShareMath.sol";
 import "../../../lib/LiquidityAmounts.sol";
@@ -18,7 +18,7 @@ import "hardhat/console.sol";
 
 contract RockOynxEthStakeLendStrategy is
     RockOnyxAccessControl,
-    ReentrancyGuard
+    ReentrancyGuardUpgradeable
 {
     using LiquidityAmounts for uint256;
     ISwapProxy internal ethSwapProxy;
@@ -48,16 +48,14 @@ contract RockOynxEthStakeLendStrategy is
         uint256 convertedUsdAmount
     );
 
-    constructor() {
-        ethStakeLendState = EthStakeLendState(0, 0);
-    }
-
     function ethStakeLend_Initialize(
         address _swapAddress,
         address _usd,
         address _weth,
         address _wstEth
     ) internal {
+        accessControl_Initialize();
+        ethStakeLendState = EthStakeLendState(0, 0);
         ethSwapProxy = ISwapProxy(_swapAddress);
         usd = _usd;
         weth = _weth;
@@ -165,6 +163,7 @@ contract RockOynxEthStakeLendStrategy is
     function getTotalEthStakeLendAssets() internal view returns (uint256) {
         return ethStakeLendState.totalBalance;
     }
+
     /**
      * @dev Retrieves the unallocated balance in the Ethereum Stake & Lend strategy.
      * @return The unallocated balance in the Ethereum Stake & Lend strategy.
