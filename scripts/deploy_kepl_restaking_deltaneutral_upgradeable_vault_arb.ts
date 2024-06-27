@@ -17,17 +17,30 @@ import {
 const chainId: CHAINID = network.config.chainId ?? 0;
 console.log("chainId ", chainId);
 
-const usdcAddress = USDC_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const usdtAddress = USDT_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const daiAddress = DAI_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const wethAddress = WETH_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const rsEthAddress = RSETH_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const uniSwapAddress = UNI_SWAP_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const aevoAddress = AEVO_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const aevoConnectorAddress = AEVO_CONNECTOR_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const kelpDepositAddress = KELP_DEPOSIT_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
-const kelpDepositRefId = KELP_DEPOSIT_REF_ID[chainId] || "0x0000000000000000000000000000000000000000";
-const zircuitDepositAddress = ZIRCUIT_DEPOSIT_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const usdcAddress =
+  USDC_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const usdtAddress =
+  USDT_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const daiAddress =
+  DAI_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const wethAddress =
+  WETH_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const rsEthAddress =
+  RSETH_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const uniSwapAddress =
+  UNI_SWAP_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const aevoAddress =
+  AEVO_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const aevoConnectorAddress =
+  AEVO_CONNECTOR_ADDRESS[chainId] ||
+  "0x0000000000000000000000000000000000000000";
+const kelpDepositAddress =
+  KELP_DEPOSIT_ADDRESS[chainId] || "0x0000000000000000000000000000000000000000";
+const kelpDepositRefId =
+  KELP_DEPOSIT_REF_ID[chainId] || "0x0000000000000000000000000000000000000000";
+const zircuitDepositAddress =
+  ZIRCUIT_DEPOSIT_ADDRESS[chainId] ||
+  "0x0000000000000000000000000000000000000000";
 
 const contractAdmin = "0x0d4eef21D898883a6bd1aE518B60fEf7A951ce4D";
 
@@ -67,15 +80,26 @@ async function deployKelpRestakingDeltaNeutralVault() {
   await kelpRestakingDNVault.waitForDeployment();
 
   console.log(
-    "deploy kelpRestakingDNVault successfully: %s",
+    "deploy kelpRestakingDNVault proxy successfully: %s",
     await kelpRestakingDNVault.getAddress()
+  );
+
+  // Print the implementation address
+  const implementationAddress =
+    await upgrades.erc1967.getImplementationAddress(await kelpRestakingDNVault.getAddress());
+  console.log(
+    "KelpRestakingDNVault implementation address: %s",
+    implementationAddress
   );
 }
 
 async function main() {
   const [deployer] = await ethers.getSigners();
 
-  console.log("Deploying contracts with the account:", await deployer.getAddress());
+  console.log(
+    "Deploying contracts with the account:",
+    await deployer.getAddress()
+  );
 
   await deployKelpRestakingDeltaNeutralVault();
 }

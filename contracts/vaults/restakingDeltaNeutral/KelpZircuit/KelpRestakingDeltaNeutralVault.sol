@@ -11,12 +11,6 @@ contract KelpRestakingDeltaNeutralVault is
     PerpDexStrategy,
     BaseDeltaNeutralVault
 {
-    constructor()
-        KelpZircuitRestakingStrategy()
-        PerpDexStrategy()
-        BaseDeltaNeutralVault()
-    {}
-
     function initialize(
         address _admin,
         address _usdc,

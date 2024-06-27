@@ -19,8 +19,8 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     IAevo private AEVO;
 
     // USDC
-    address l1Token = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address l2Token = 0x643aaB1618c600229785A5E06E4b2d13946F7a1A;
+    address private l1Token;
+    address private l2Token;
 
     event PerpDexVendorDeposited(uint256 depositAmount);
     event PerpDexBalanceChanged(uint256 unAllocatedBalance, uint256 amountWithdrawn);
@@ -37,6 +37,9 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
         AEVO = IAevo(_perpDexAddress);
         perpDexReceiver = _perpDexReceiver;
         perpDexConnector = _perpDexConnector;
+
+        l1Token = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+        l2Token = 0x643aaB1618c600229785A5E06E4b2d13946F7a1A;
         
         _grantRole(ROCK_ONYX_OPTIONS_TRADER_ROLE, perpDexReceiver);
     }
