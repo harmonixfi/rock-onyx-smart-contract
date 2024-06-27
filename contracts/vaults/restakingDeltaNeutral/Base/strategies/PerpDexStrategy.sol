@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../../../interfaces/IAevo.sol";
+import "../../../../interfaces/IPerpDexProxy.sol";
 import "../../../../extensions/RockOnyxAccessControl.sol";
 import "../../structs/RestakingDeltaNeutralStruct.sol";
 import "hardhat/console.sol";
@@ -16,11 +16,7 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     PerpDexState internal perpDexState;
     address perpDexReceiver;
     address private perpDexConnector;
-    IAevo private AEVO;
-
-    // USDC
-    address private l1Token;
-    address private l2Token;
+    IPerpDexProxy private perpDexProxy;
 
     event PerpDexVendorDeposited(uint256 depositAmount);
     event PerpDexBalanceChanged(uint256 unAllocatedBalance, uint256 amountWithdrawn);
@@ -34,7 +30,7 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     ) internal {
         perpDexState = PerpDexState(0, 0);
         perpDexAsset = _usdc;
-        AEVO = IAevo(_perpDexAddress);
+        perpDexProxy = IPerpDexProxy(_perpDexAddress);
         perpDexReceiver = _perpDexReceiver;
         perpDexConnector = _perpDexConnector;
 
@@ -47,12 +43,15 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     function depositToVendor(uint32 gasLimit) external payable nonReentrant {
         _auth(ROCK_ONYX_ADMIN_ROLE);
         
+        // USDC
+        address l1Token = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+        address l2Token = 0x643aaB1618c600229785A5E06E4b2d13946F7a1A;
         bytes memory data = "";
         uint256 amount = perpDexState.unAllocatedBalance;
         perpDexState.unAllocatedBalance -= amount;
-        IERC20(perpDexAsset).approve(address(AEVO), amount);
+        IERC20(perpDexAsset).approve(address(perpDexProxy), amount);
 
-        AEVO.depositERC20To{value: msg.value}(
+        perpDexProxy.depositERC20To{value: msg.value}(
             l1Token,
             l2Token,
             perpDexReceiver,
@@ -71,9 +70,9 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
         bytes memory data = "";
         uint256 amount = perpDexState.unAllocatedBalance;
         perpDexState.unAllocatedBalance -= amount;
-        IERC20(perpDexAsset).approve(address(AEVO), amount);
+        IERC20(perpDexAsset).approve(address(perpDexProxy), amount);
 
-        AEVO.depositToAppChain{value: msg.value}(
+        perpDexProxy.depositToAppChain{value: msg.value}(
             perpDexReceiver,
             perpDexAsset,
             amount,
@@ -81,6 +80,19 @@ contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
             perpDexConnector,
             data
         );
+
+        perpDexState.perpDexBalance += amount;
+        emit PerpDexVendorDeposited(amount);
+    }
+
+    function depositToVendor() external payable nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+        
+        uint256 amount = perpDexState.unAllocatedBalance;
+        perpDexState.unAllocatedBalance -= amount;
+        IERC20(perpDexAsset).approve(address(perpDexProxy), amount);
+
+        perpDexProxy.depositRaw(perpDexReceiver, perpDexAsset, uint128(amount));
 
         perpDexState.perpDexBalance += amount;
         emit PerpDexVendorDeposited(amount);

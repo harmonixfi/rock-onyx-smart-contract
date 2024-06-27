@@ -52,7 +52,7 @@ abstract contract BaseDeltaNeutralVault is
         uint24[] memory _fees
     ) internal virtual {
         vaultParams = VaultParams(_decimals, _usdc, _minimumSupply, _cap, 10, 1);
-        vaultState = VaultState(0, 0, 0, 0, 0);
+        vaultState = VaultState(0, 0, 0, 0, block.timestamp);
         initialPPS = _initialPPS;
         networkCost = _networkCost;
 
@@ -111,7 +111,6 @@ abstract contract BaseDeltaNeutralVault is
                 getFee(address(transitToken), address(vaultParams.asset))
             );
         }
-
         uint256 shares = _issueShares(amount);
         depositReceipts[msg.sender].shares += shares;
         depositReceipts[msg.sender].depositAmount += amount;
@@ -138,7 +137,6 @@ abstract contract BaseDeltaNeutralVault is
 
         uint256 pps = _getPricePerShare();
         uint256 totalShareAmount = depositReceipt.shares * pps / 1e6;
-        // uint256 totalProfit = totalShareAmount <= depositReceipt.depositAmount ? 0 : (totalShareAmount - depositReceipt.depositAmount) * 1e6;
         uint256 totalProfit = totalShareAmount <= depositReceipt.depositAmount ? 0 : (totalShareAmount - depositReceipt.depositAmount);
         uint256 withdrawProfit = (totalProfit * shares) / depositReceipt.shares;
         uint256 performanceFee = withdrawProfit > 0 ? (withdrawProfit * vaultParams.performanceFeeRate) / 1e14 : 0;
@@ -196,17 +194,19 @@ abstract contract BaseDeltaNeutralVault is
         require(withdrawals[msg.sender].shares >= shares, "INVALID_SHARES");
         uint256 withdrawAmount = (shares * withdrawals[msg.sender].withdrawAmount) / withdrawals[msg.sender].shares;
         uint256 performanceFee = (shares * withdrawals[msg.sender].performanceFee) / withdrawals[msg.sender].shares;
-        vaultState.performanceFeeAmount += performanceFee;
-        vaultState.managementFeeAmount += networkCost;
-        withdrawAmount -= (performanceFee + networkCost);
+        uint256 feeAmount = performanceFee + networkCost;
+        vaultState.totalFeePoolAmount += feeAmount;
 
-        require( vaultState.withdrawPoolAmount > withdrawAmount, "EXCEED_WD_POOL_CAP");
+        require( vaultState.withdrawPoolAmount > withdrawAmount - feeAmount, "EXCEED_WD_POOL_CAP");
+        withdrawAmount = vaultState.withdrawPoolAmount < withdrawAmount ? vaultState.withdrawPoolAmount : withdrawAmount;
         vaultState.withdrawPoolAmount -= withdrawAmount;
         withdrawals[msg.sender].withdrawAmount -= withdrawAmount;
         withdrawals[msg.sender].shares -= shares;
         vaultState.totalShares -= shares;
-        IERC20(vaultParams.asset).safeTransfer(msg.sender, withdrawAmount);
+
+        IERC20(vaultParams.asset).safeTransfer(msg.sender, withdrawAmount - feeAmount);
         emit Withdrawn(msg.sender, withdrawAmount, withdrawals[msg.sender].shares);
+        
         // migration
         updateDepositArr(depositReceipts[msg.sender]);
         updateWithdrawalArr(withdrawals[msg.sender]);
@@ -216,22 +216,17 @@ abstract contract BaseDeltaNeutralVault is
     /**
      * @notice claimFee to claim vault fee.
      */
-    function claimFee(address receiver) external nonReentrant {
+    function claimFee(address receiver, uint256 amount) external nonReentrant {
         _auth(ROCK_ONYX_ADMIN_ROLE);
 
-        uint256 totalFeeAmount = vaultState.performanceFeeAmount + vaultState.managementFeeAmount;
-        if (totalFeeAmount > vaultState.withdrawPoolAmount) {
-            vaultState.performanceFeeAmount = 0;
-            vaultState.managementFeeAmount = 0;
-            vaultState.withdrawPoolAmount = 0;
-            IERC20(vaultParams.asset).safeTransfer(msg.sender, vaultState.withdrawPoolAmount);
+        if (amount > vaultState.totalFeePoolAmount) {
+            vaultState.totalFeePoolAmount = 0;
+            IERC20(vaultParams.asset).safeTransfer(msg.sender, vaultState.totalFeePoolAmount);
             return;
         }
 
-        vaultState.withdrawPoolAmount -= totalFeeAmount;
-        vaultState.performanceFeeAmount = 0;
-        vaultState.managementFeeAmount = 0;
-        IERC20(vaultParams.asset).safeTransfer(receiver, totalFeeAmount);
+        vaultState.totalFeePoolAmount -= amount;
+        IERC20(vaultParams.asset).safeTransfer(receiver, amount);
     }
 
     function getVaultState() external view returns (VaultState memory) {
@@ -286,6 +281,11 @@ abstract contract BaseDeltaNeutralVault is
         return _totalValueLocked();
     }
 
+    function allocatedRatio() external view returns (uint256, uint256) {
+        return _allocatedRatio();
+    }
+
+    function _allocatedRatio() internal virtual view returns (uint256, uint256) {}
     /**
      * @notice Mints the vault shares to the creditor
      * @param amount is the amount to issue shares
@@ -303,8 +303,14 @@ abstract contract BaseDeltaNeutralVault is
     /**
      * @notice get vault fees
      */
-    function getManagementFee() internal view returns (uint256) {
-        return (_totalValueLocked() * vaultParams.managementFeeRate) / 100 / 52;
+    function getManagementFee() public view returns (uint256, uint256) {
+        return (_getManagementFee(block.timestamp), block.timestamp);
+    }
+
+    function _getManagementFee(uint256 timestamp) internal view returns (uint256) {
+        uint256 perSecondRate = vaultParams.managementFeeRate * 1e12 / (365 * 86400) + 1; // +1 mean round up second rate
+        uint256 period = timestamp - vaultState.lastUpdateManagementFeeDate;
+        return ((_totalValueLocked() - vaultState.withdrawPoolAmount) * perSecondRate * period) / 1e14;
     }
 
     /**

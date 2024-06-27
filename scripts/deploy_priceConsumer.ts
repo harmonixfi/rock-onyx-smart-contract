@@ -50,65 +50,26 @@ const daiPriceFeed = DAI_PRICE_FEED_ADDRESS[chainId] ?? "";
 async function deployPriceConsumerContract() {
   const factory = await ethers.getContractFactory("PriceConsumer");
   let arr1, arr2, arr3;
-  if (chainId == CHAINID.ARBITRUM_MAINNET) {
-    arr1 = [
-      wethAddress,
-      wstethAddress,
-      usdceAddress,
-      arbAddress,
-      ezEthAddress,
-      rsEthAddress,
-      usdtAddress,
-      daiAddress,
-    ];
-    arr2 = [
-      usdcAddress,
-      wethAddress,
-      usdcAddress,
-      usdcAddress,
-      wethAddress,
-      wethAddress,
-      usdcAddress,
-      usdtAddress,
-    ];
-    arr3 = [
-      ethPriceFeed,
-      steth_ethPriceFeed,
-      usdcePriceFeed,
-      arbPriceFeed,
-      ezEth_EthPriceFeed,
-      rsEth_EthPriceFeed,
-      usdtPriceFeed,
-      daiPriceFeed,
-    ];
-  } else if (chainId == CHAINID.ETH_MAINNET) {
-    arr1 = [
-      wethAddress,
-      wstethAddress,
-      ezEthAddress,
-      rsEthAddress,
-      usdtAddress,
-      daiAddress,
-    ];
-    arr2 = [
-      usdcAddress,
-      wethAddress,
-      wethAddress,
-      wethAddress,
-      usdcAddress,
-      usdtAddress,
-    ];
-    arr3 = [
-      ethPriceFeed,
-      steth_ethPriceFeed,
-      ezEth_EthPriceFeed,
-      rsEth_EthPriceFeed,
-      usdtPriceFeed,
-      daiPriceFeed,
-    ];
-  } else {
-    console.log("CHAIN is not supported");
-    return;
+  switch (chainId) {
+    case CHAINID.ARBITRUM_MAINNET:
+      arr1 = [wethAddress, wstethAddress, usdceAddress, arbAddress, ezEthAddress, rsEthAddress, usdtAddress, daiAddress];
+      arr2 = [usdcAddress, wethAddress, usdcAddress, usdcAddress, wethAddress, wethAddress, usdcAddress, usdtAddress];
+      arr3 = [ethPriceFeed, steth_ethPriceFeed, usdcePriceFeed, arbPriceFeed, ezEth_EthPriceFeed, rsEth_EthPriceFeed, usdtPriceFeed, daiPriceFeed, ];
+      break;
+    case CHAINID.ETH_MAINNET:
+      arr1 = [wethAddress, wstethAddress, ezEthAddress, rsEthAddress, usdtAddress, daiAddress];
+      arr2 = [usdcAddress, wethAddress, wethAddress, wethAddress, usdcAddress, usdtAddress];
+      arr3 = [ethPriceFeed, steth_ethPriceFeed, ezEth_EthPriceFeed, rsEth_EthPriceFeed, usdtPriceFeed, daiPriceFeed];
+      break;
+    case CHAINID.BASE_MAINNET:
+      arr1 = [wethAddress, wstethAddress, usdtAddress];
+      arr2 = [usdcAddress, wethAddress, usdcAddress];
+      arr3 = [ethPriceFeed, steth_ethPriceFeed, usdtPriceFeed];
+      break;
+  
+    default:
+      console.log("CHAIN is not supported");
+      return;
   }
 
   const admin = "0xad38f5dd867ef07b8fe7df685f28743922bb33c4";

@@ -73,11 +73,11 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
         _auth(ROCK_ONYX_OPTIONS_TRADER_ROLE);
 
         withdrawFromRestakingProxy(ethAmount);
-        ethToken.approve(address(swapProxy), ethAmount);
+        ethToken.approve(address(swapProxy), ethToken.balanceOf(address(this)));
         uint256 actualUsdcAmount = swapProxy.swapTo(
             address(this),
             address(ethToken),
-            ethAmount,
+            ethToken.balanceOf(address(this)),
             address(usdcToken),
             getFee(address(usdcToken), address(ethToken))
         );

@@ -3,16 +3,24 @@ pragma solidity ^0.8.19;
 
 import "../../lib/BaseSwap.sol";
 import "../../interfaces/UniSwap/IUniswapRouter.sol";
+import "hardhat/console.sol";
 
 contract UniSwap is BaseSwap {
+    uint64 private constant BASE_NETWORK = 8453;
+
     IUniSwapRouter private swapRouter;
+    IUniSwapRouterOnBase private swapRouterOnBase;
+    uint64 private network;
 
     constructor(
         address _admin,
         address _swapRouterAddress,
-        address _priceConsumer
+        address _priceConsumer,
+        uint64 _network
     ) BaseSwap(_admin, _priceConsumer) {
         swapRouter = IUniSwapRouter(_swapRouterAddress);
+        swapRouterOnBase = IUniSwapRouterOnBase(_swapRouterAddress);
+        network = _network;
     }
 
     function swapTo(
@@ -35,19 +43,34 @@ contract UniSwap is BaseSwap {
             amountIn
         );
 
-        IUniSwapRouter.ExactInputSingleParams memory params = IUniSwapRouter
-            .ExactInputSingleParams({
-                tokenIn: tokenIn,
-                tokenOut: tokenOut,
-                fee: poolFee,
-                recipient: recipient,
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: amountOutMinimum,
-                sqrtPriceLimitX96: 0
-            });
+        if(network == BASE_NETWORK){
+            IUniSwapRouterOnBase.ExactInputSingleParams memory wdParams = IUniSwapRouterOnBase
+                .ExactInputSingleParams({
+                    tokenIn: tokenIn,
+                    tokenOut: tokenOut,
+                    fee: poolFee,
+                    recipient: recipient,
+                    amountIn: amountIn,
+                    amountOutMinimum: amountOutMinimum,
+                    sqrtPriceLimitX96: 0
+                });
 
-        return swapRouter.exactInputSingle(params);
+            return swapRouterOnBase.exactInputSingle(wdParams);
+        }
+        
+        IUniSwapRouter.ExactInputSingleParams memory params = IUniSwapRouter
+                .ExactInputSingleParams({
+                    tokenIn: tokenIn,
+                    tokenOut: tokenOut,
+                    fee: poolFee,
+                    recipient: recipient,
+                    deadline: block.timestamp,
+                    amountIn: amountIn,
+                    amountOutMinimum: amountOutMinimum,
+                    sqrtPriceLimitX96: 0
+                });
+
+            return swapRouter.exactInputSingle(params);
     }
 
     function swapToWithOutput(
@@ -62,7 +85,6 @@ contract UniSwap is BaseSwap {
             tokenOut,
             amountOut
         );
-        
         TransferHelper.safeTransferFrom(
             tokenIn,
             msg.sender,
@@ -75,6 +97,22 @@ contract UniSwap is BaseSwap {
             address(swapRouter),
             amountInMaximum
         );
+
+        if(network == BASE_NETWORK){
+            console.log("BASE_NETWORK");
+            IUniSwapRouterOnBase.ExactOutputSingleParams memory wdParams = IUniSwapRouterOnBase
+                .ExactOutputSingleParams({
+                    tokenIn: tokenIn,
+                    tokenOut: tokenOut,
+                    fee: poolFee,
+                    recipient: recipient,
+                    amountOut: amountOut,
+                    amountInMaximum: amountInMaximum,
+                    sqrtPriceLimitX96: 0
+                });
+
+            return swapRouterOnBase.exactOutputSingle(wdParams);
+        }
 
         IUniSwapRouter.ExactOutputSingleParams memory params = IUniSwapRouter
             .ExactOutputSingleParams({

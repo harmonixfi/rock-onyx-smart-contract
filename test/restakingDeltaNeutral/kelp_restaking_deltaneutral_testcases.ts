@@ -89,7 +89,8 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     uniSwapContract = await factory.deploy(
       admin,
       swapRouterAddress,
-      priceConsumerContract.getAddress()
+      priceConsumerContract.getAddress(),
+      chainId
     );
     await uniSwapContract.waitForDeployment();
 
@@ -377,33 +378,216 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost, PRECISION);
     totalValueLock = await logAndReturnTotalValueLock();
     expect(totalValueLock).to.approximately(200 * 1e6, PRECISION);
-  });
+  });~
 
-  it("migration, export and import data to new delta neutral vault - 213900665", async function () {
+  it("migration, export and import data to new restaking delta neutral vault", async function () {
     const contractAdmin = await ethers.getImpersonatedSigner("0x0d4eef21D898883a6bd1aE518B60fEf7A951ce4D");
-    const contract = await ethers.getContractAt("KelpRestakingDeltaNeutralVault", "0x2B7cDAD36a86fd05Ac1680CDc42a0EA16804D80c");
+    const contractAddress = '0xF30353335003E71b42a89314AAaeC437E7Bc8F0B';
+    const exportABI = [{
+      "inputs": [],
+      "name": "exportVaultState",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "depositAmount",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct DepositReceipt",
+              "name": "depositReceipt",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct DepositReceiptArr[]",
+          "name": "",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "pps",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "profit",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "performanceFee",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "withdrawAmount",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct Withdrawal",
+              "name": "withdrawal",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct WithdrawalArr[]",
+          "name": "",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint8",
+              "name": "decimals",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minimumSupply",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "cap",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "performanceFeeRate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFeeRate",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct VaultParams",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "performanceFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "managementFeeAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "withdrawPoolAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pendingDepositAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalShares",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct VaultState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalBalance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct EthRestakingState",
+          "name": "",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "unAllocatedBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "perpDexBalance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PerpDexState",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }]; 
+    const contract = new ethers.Contract(contractAddress, exportABI, contractAdmin);
+    //const contract = await ethers.getContractAt("KelpRestakingDeltaNeutralVault", "0x2B7cDAD36a86fd05Ac1680CDc42a0EA16804D80c");
 
     console.log("-------------export old vault state---------------");
     let exportVaultStateTx = await contract
     .connect(contractAdmin)
     .exportVaultState();
-    console.log(exportVaultStateTx);
-    console.log(exportVaultStateTx[0][0][1]);
-    console.log(exportVaultStateTx[0][1][1]);
-  
+    
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
+
     console.log("Deposit ");
-    exportVaultStateTx[0].forEach((element: any[][]) => {
-      console.log(element);
-    });
-
+    exportVaultStateTx[0].forEach((element: any[][]) => { console.log(element); });
     console.log("withdraw ");
-    exportVaultStateTx[1].forEach((element: any[][]) => {
-      console.log(element);
-    });
+    exportVaultStateTx[1].forEach((element: any[][]) => { console.log(element); });
 
-    const kelpRestakingDeltaNeutralVault = await ethers.getContractFactory(
-      "KelpRestakingDeltaNeutralVault"
-    );
+    const kelpRestakingDeltaNeutralVault = await ethers.getContractFactory("KelpRestakingDeltaNeutralVault");
 
     const newContract = await kelpRestakingDeltaNeutralVault.deploy(
       admin,
@@ -458,15 +642,14 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
       minimumSupply: exportVaultStateTx[2][2],
       cap: exportVaultStateTx[2][3],
       performanceFeeRate: exportVaultStateTx[2][4],
-      managementFeeRate: exportVaultStateTx[2][5],
-      networkCost: exportVaultStateTx[2][6] == 0 ? 1e6 : exportVaultStateTx[2][6]
+      managementFeeRate: exportVaultStateTx[2][5]
     };
     const _vaultState = {
-      performanceFeeAmount: exportVaultStateTx[3][0],
-      managementFeeAmount: exportVaultStateTx[3][1],
       withdrawPoolAmount: exportVaultStateTx[3][2],
       pendingDepositAmount: exportVaultStateTx[3][3],
       totalShares: exportVaultStateTx[3][4],
+      totalFeePoolAmount: exportVaultStateTx[3][0] + exportVaultStateTx[3][1],
+      lastUpdateManagementFeeDate: (await ethers.provider.getBlock('latest')).timestamp,
     };
     const _ethStakeLendState = {
       unAllocatedBalance: exportVaultStateTx[4][0],
@@ -491,18 +674,17 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     .connect(admin)
     .exportVaultState();
 
-    console.log(exportVaultStateTx);
-    console.log(exportVaultStateTx[0][0][1]);
-    console.log(exportVaultStateTx[0][1][1]);
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
 
     console.log("Deposit ");
-    exportVaultStateTx[0].forEach((element: any[][]) => {
-      console.log(element);
-    });
+    exportVaultStateTx[0].forEach((element: any[][]) => { console.log(element); });
 
     console.log("withdraw ");
-    exportVaultStateTx[1].forEach((element: any[][]) => {
-      console.log(element);
-    });
+    exportVaultStateTx[1].forEach((element: any[][]) => { console.log(element); });
   });
 });
