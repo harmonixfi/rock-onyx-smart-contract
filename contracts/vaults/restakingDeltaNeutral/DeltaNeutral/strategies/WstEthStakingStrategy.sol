@@ -13,12 +13,14 @@ contract WstEthStakingStrategy is BaseRestakingStrategy {
         address _usdcAddress,
         address _ethAddress,
         address _swapAddress,
+        address _restakingTokenHolderAddress,
         address[] memory _token0s,
         address[] memory _token1s,
-        uint24[] memory _fees
+        uint24[] memory _fees,
+        uint64 _network
     ) internal override
     {
-        super.ethRestaking_Initialize(_restakingToken, _usdcAddress, _ethAddress, _swapAddress, _token0s, _token1s, _fees);
+        super.ethRestaking_Initialize(_restakingToken, _usdcAddress, _ethAddress, _swapAddress, _restakingTokenHolderAddress, _token0s, _token1s, _fees, _network);
     }
 
     function syncRestakingBalance() internal override{

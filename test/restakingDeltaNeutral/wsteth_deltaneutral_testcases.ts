@@ -3,6 +3,7 @@ import { expect } from "chai";
 
 import * as Contracts from "../../typechain-types";
 import {
+  AddressZero,
   CHAINID,
   WETH_ADDRESS,
   USDC_ADDRESS,
@@ -105,9 +106,11 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       wstethAddress,
       BigInt(1 * 1e6),
       await uniSwapContract.getAddress(),
+      AddressZero,
       [wethAddress, wstethAddress,  usdtAddress],
       [usdcAddress, wethAddress, usdcAddress],
-      [500, 100, 100]
+      [500, 100, 100],
+      chainId
     );
     await wstEthStakingDNVault.waitForDeployment();
 
@@ -848,9 +851,11 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       wstethAddress,
       BigInt(1 * 1e6),
       await uniSwapContract.getAddress(),
+      AddressZero,
       [wethAddress, wstethAddress,  usdtAddress],
       [usdcAddress, wethAddress, usdcAddress],
-      [500, 100, 100]
+      [500, 100, 100],
+      chainId
     );
     await newContract.waitForDeployment();
 

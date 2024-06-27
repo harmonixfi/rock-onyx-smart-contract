@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "../../../../interfaces/IRenzoRestakeProxy.sol";
 import "../../../../interfaces/IZircuitRestakeProxy.sol";
+import "../../../../interfaces/IWithdrawRestakingPool.sol";
 import "../../../../interfaces/IWETH.sol";
 import "./../../Base/strategies/BaseRestakingStrategy.sol";
 import "./../../Base/BaseSwapVault.sol";
@@ -18,16 +19,16 @@ contract RenzoZircuitRestakingStrategy is BaseRestakingStrategy {
         address _restakingToken,
         address _usdcAddress,
         address _ethAddress,
-        address[] memory _restakingPoolAddresses,
+        address[] memory _restakingProxies,
         address _swapAddress,
         address[] memory _token0s,
         address[] memory _token1s,
-        uint24[] memory _fees
+        uint24[] memory _fees,
+        uint64 _network
     ) internal {
-        super.ethRestaking_Initialize(_restakingToken, _usdcAddress, _ethAddress, _swapAddress, _token0s, _token1s, _fees);
+        super.ethRestaking_Initialize(_restakingToken, _usdcAddress, _ethAddress, _swapAddress, _restakingProxies[1], _token0s, _token1s, _fees, _network);
 
-        renzoRestakeProxy = IRenzoRestakeProxy(_restakingPoolAddresses[0]);
-        zircuitRestakeProxy = IZircuitRestakeProxy(_restakingPoolAddresses[1]);
+        renzoRestakeProxy = IRenzoRestakeProxy(_restakingProxies[0]);
     }
 
     function syncRestakingBalance() internal override{
