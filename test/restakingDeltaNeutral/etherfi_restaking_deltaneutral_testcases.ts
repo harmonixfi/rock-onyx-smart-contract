@@ -1,3 +1,4 @@
+import { EtherFiZircuitRestakingStrategy } from './../../typechain-types/contracts/vaults/restakingDeltaNeutral/EtherFiZircuit/strategies/EtherFiZircuitRestakingStrategy';
 const { ethers, network } = require('hardhat');
 import { expect } from 'chai';
 
@@ -25,11 +26,12 @@ import {
     WETH_IMPERSONATED_SIGNER_ADDRESS,
 } from '../../constants';
 import { BigNumberish, Signer } from 'ethers';
+import { log } from 'console';
 
 const chainId: CHAINID = network.config.chainId;
 console.log('chainId ', chainId);
 let aevoRecipientAddress: string;
-
+const ETH_AMOUNT = ethers.parseEther('1');
 const PRECISION = 2 * 1e6;
 
 describe('EtherFiRestakingDeltaNeutralVault', () => {
@@ -40,8 +42,15 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         user4: Signer;
 
     let etherfiRestakingDNVault: Contracts.EtherFiRestakingDeltaNeutralVault;
+    let etherfiRestakingStrategy: Contracts.EtherFiZircuitRestakingStrategy;
     let weth: Contracts.IERC20;
+    let usdc: Contracts.IERC20;
+    let usdt: Contracts.IERC20;
+    let dai: Contracts.IERC20;
 
+    const usdcImpersonatedSigner = USDC_IMPERSONATED_SIGNER_ADDRESS[chainId];
+    const usdtImpersonatedSigner = USDT_IMPERSONATED_SIGNER_ADDRESS[chainId];
+    const daiImpersonatedSigner = DAI_IMPERSONATED_SIGNER_ADDRESS[chainId];
     const wethImpersonatedSigner = WETH_IMPERSONATED_SIGNER_ADDRESS[chainId];
     const usdcAddress = USDC_ADDRESS[chainId] || '';
     const usdtAddress = USDT_ADDRESS[chainId] || '';
@@ -130,15 +139,32 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         );
     }
 
+    async function deployEtherFiRestakingStrategy() {
+        const etherFiZircuitRestakingStrategy = await ethers.getContractFactory(
+            'EtherFiZircuitRestakingStrategy'
+        );
+
+        etherfiRestakingStrategy = await etherFiZircuitRestakingStrategy.deploy();
+        await etherfiRestakingStrategy.waitForDeployment();
+
+        console.log(
+            'deploy etherfiRestakingStrategy successfully: %s',
+            await etherfiRestakingStrategy.getAddress()
+        );
+    }
+
     beforeEach(async function () {
         [admin, user1, user2, user3, user4] = await ethers.getSigners();
         aevoRecipientAddress = await user4.getAddress();
         weth = await ethers.getContractAt("IERC20", wethAddress);
-        console.log("NINVB => weth ", weth);
+        usdc = await ethers.getContractAt('IERC20', usdcAddress);
+        usdt = await ethers.getContractAt('IERC20', usdtAddress);
+        dai = await ethers.getContractAt('IERC20', daiAddress);
         
         await deployPriceConsumerContract();
         await deployUniSwapContract();
         await deployEtherFiRestakingDeltaNeutralVault();
+        await deployEtherFiRestakingStrategy();
         console.log('deployEtherFiRestakingDeltaNeutralVault');
     });
 
@@ -166,7 +192,81 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         await transferTx.wait();
     }
 
+    async function logAndReturnTotalValueLock() {
+        const totalValueLocked = await etherfiRestakingDNVault
+            .connect(admin)
+            .totalValueLocked();
+
+        console.log('totalValueLocked %s', totalValueLocked);
+
+        return totalValueLocked;
+    }
+
+    async function depositToKelpDaoProxy() {
+        await expect(() =>
+            admin.sendTransaction({
+                to: etherfiRestakingStrategy.getAddress(),
+                value: ETH_AMOUNT,
+            })
+        ).to.changeEtherBalance(etherfiRestakingStrategy, ETH_AMOUNT);
+    }
+
     it("seed data", async () => {
-        
+        const usdcSigner = await ethers.getImpersonatedSigner(
+            usdcImpersonatedSigner
+        );
+        const usdtSigner = await ethers.getImpersonatedSigner(
+            usdtImpersonatedSigner
+        );
+        const daiSigner = await ethers.getImpersonatedSigner(
+            daiImpersonatedSigner
+        );
+
+        await transferForUser(usdc, usdcSigner, user1, 100000 * 1e6);
+        await transferForUser(usdc, usdcSigner, user2, 100000 * 1e6);
+        await transferForUser(usdc, usdcSigner, user3, 100000 * 1e6);
+        await transferForUser(usdc, usdcSigner, user4, 100000 * 1e6);
+        await transferForUser(usdc, usdcSigner, admin, 100000 * 1e6);
+
+        await transferForUser(usdt, usdtSigner, user2, 100000 * 1e6);
+    });
+
+    it("test rock onyx access contral", async () => {
+        const ROCK_ONYX_ADMIN_ROLE = "0xdf7ae06225b060fdb3477e253632ba0fef61b138e661391f47b795efaa9c6388";
+        //grant role user2 to admin
+        const grantRoleTx = await etherfiRestakingDNVault.connect(admin).grantRole(ROCK_ONYX_ADMIN_ROLE, user2);
+        await grantRoleTx.wait();
+        //check user2 is admin
+        let hasRoleTx = await etherfiRestakingDNVault.connect(admin).hasRole(ROCK_ONYX_ADMIN_ROLE, user2);
+        console.log('hasRoleTx %s', hasRoleTx);
+        expect(hasRoleTx).to.equal(true);
+        //revoke role user admin
+        const revokeRoleTx = await etherfiRestakingDNVault.connect(user2).revokeRole(ROCK_ONYX_ADMIN_ROLE, admin);
+        await revokeRoleTx.wait();
+        //check role current user admin
+        hasRoleTx = await etherfiRestakingDNVault.connect(user2).hasRole(ROCK_ONYX_ADMIN_ROLE, admin);
+        console.log('hasRoleTx %s', hasRoleTx);
+        expect(hasRoleTx).to.equal(false);
+
+        await deposit(user1, 10 * 1e6, usdc, usdc);
+        await deposit(user2, 100 * 1e6, usdc, usdc);
+
+        let totalValueLock = await logAndReturnTotalValueLock();
+        expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
     })
+
+    it("deposit to zircuit", async () => {
+        await deposit(user1, 10 * 1e6, usdc, usdc);
+        await deposit(user2, 100 * 1e6, usdc, usdc);
+
+        let totalValueLock = await logAndReturnTotalValueLock();
+        expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
+
+        console.log('-------------open position---------------');
+        const openPositionTx = await etherfiRestakingDNVault
+            .connect(admin)
+            .openPosition(BigInt(0.01 * 1e18));
+        await openPositionTx.wait();
+        console.log('NINVB => openPositionTx ', await openPositionTx);
+    }) 
 });
