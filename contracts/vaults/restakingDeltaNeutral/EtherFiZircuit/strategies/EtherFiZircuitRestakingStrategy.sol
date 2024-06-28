@@ -6,6 +6,7 @@ import "../../../../interfaces/IZircuitRestakeProxy.sol";
 import "../../../../interfaces/IEtherFiRestakeProxy.sol";
 import "../../../../interfaces/IWithdrawRestakingPool.sol";
 import "../../../../interfaces/IWETH.sol";
+import "hardhat/console.sol";
 
 contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
     IEtherFiRestakeProxy private etherFiRestakeProxy;
@@ -61,6 +62,8 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
         if (address(etherFiRestakeProxy) != address(0)) {
             IWETH(address(ethToken)).withdraw(ethAmount);
             etherFiRestakeProxy.deposit{value: ethAmount}();
+
+            console.log("eETH %s", restakingToken.balanceOf(address(this)));
         } else {
             ethToken.approve(address(swapProxy), ethAmount);
             swapProxy.swapTo(

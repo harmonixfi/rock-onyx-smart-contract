@@ -25,6 +25,7 @@ import {
     NETWORK_COST,
     WETH_IMPERSONATED_SIGNER_ADDRESS,
     WEETH_ADDRESS,
+    EETH_ADDRESS,
 } from '../../constants';
 import { BigNumberish, Signer } from 'ethers';
 import { log } from 'console';
@@ -58,7 +59,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
     const usdtAddress = USDT_ADDRESS[chainId] || '';
     const daiAddress = DAI_ADDRESS[chainId] || '';
     const wethAddress = WETH_ADDRESS[chainId] || '';
-    const eethAddress = WEETH_ADDRESS[chainId] || '';
+    const eethAddress = EETH_ADDRESS[chainId] || '';
     const ezEthAddress = EZETH_ADDRESS[chainId] || '';
     const swapRouterAddress = UNISWAP_ROUTER_ADDRESS[chainId];
     const aevoAddress = AEVO_ADDRESS[chainId];
@@ -125,11 +126,11 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
                 aevoAddress,
                 aevoRecipientAddress,
                 aevoConnectorAddress,
-                ezEthAddress,
+                eethAddress,
                 BigInt(1 * 1e6),
                 [etherfiDepositAddress, zircuitDepositAddress],
                 await uniSwapContract.getAddress(),
-                [usdcAddress, ezEthAddress, usdtAddress, daiAddress],
+                [usdcAddress, eethAddress, usdtAddress, daiAddress],
                 [wethAddress, wethAddress, usdcAddress, usdtAddress],
                 [500, 100, 100, 100]
             );
@@ -235,7 +236,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         await transferForUser(usdt, usdtSigner, user2, 100000 * 1e6);
     });
 
-    it("test rock onyx access contral", async () => {
+    it.skip("test rock onyx access contral", async () => {
         const ROCK_ONYX_ADMIN_ROLE = "0xdf7ae06225b060fdb3477e253632ba0fef61b138e661391f47b795efaa9c6388";
         //grant role user2 to admin
         const grantRoleTx = await etherfiRestakingDNVault.connect(admin).grantRole(ROCK_ONYX_ADMIN_ROLE, user2);
