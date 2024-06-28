@@ -24,6 +24,7 @@ import {
     ETHERFI_DEPOSIT_ADDRESS,
     NETWORK_COST,
     WETH_IMPERSONATED_SIGNER_ADDRESS,
+    WEETH_ADDRESS,
 } from '../../constants';
 import { BigNumberish, Signer } from 'ethers';
 import { log } from 'console';
@@ -47,6 +48,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
     let usdc: Contracts.IERC20;
     let usdt: Contracts.IERC20;
     let dai: Contracts.IERC20;
+    let eeth: Contracts.IERC20;
 
     const usdcImpersonatedSigner = USDC_IMPERSONATED_SIGNER_ADDRESS[chainId];
     const usdtImpersonatedSigner = USDT_IMPERSONATED_SIGNER_ADDRESS[chainId];
@@ -56,6 +58,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
     const usdtAddress = USDT_ADDRESS[chainId] || '';
     const daiAddress = DAI_ADDRESS[chainId] || '';
     const wethAddress = WETH_ADDRESS[chainId] || '';
+    const eethAddress = WEETH_ADDRESS[chainId] || '';
     const ezEthAddress = EZETH_ADDRESS[chainId] || '';
     const swapRouterAddress = UNISWAP_ROUTER_ADDRESS[chainId];
     const aevoAddress = AEVO_ADDRESS[chainId];
@@ -160,7 +163,8 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         usdc = await ethers.getContractAt('IERC20', usdcAddress);
         usdt = await ethers.getContractAt('IERC20', usdtAddress);
         dai = await ethers.getContractAt('IERC20', daiAddress);
-        
+        eeth = await ethers.getContractAt('IERC20', eethAddress);
+
         await deployPriceConsumerContract();
         await deployUniSwapContract();
         await deployEtherFiRestakingDeltaNeutralVault();
