@@ -7,6 +7,7 @@ import "../../../../interfaces/IEtherFiRestakeProxy.sol";
 import "../../../../interfaces/IWithdrawRestakingPool.sol";
 import "../../../../interfaces/IWETH.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
     IEtherFiRestakeProxy private etherFiRestakeProxy;
@@ -17,6 +18,7 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
 
     function ethRestaking_Initialize(
         address _restakingToken,
+        address _wrapRestakingToken,
         address _usdcAddress,
         address _ethAddress,
         address[] memory _restakingPoolAddresses,
@@ -27,6 +29,7 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
     ) internal {
         super.ethRestaking_Initialize(
             _restakingToken,
+            _wrapRestakingToken,
             _usdcAddress,
             _ethAddress,
             _swapAddress,
@@ -34,7 +37,6 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
             _token1s,
             _fees
         );
-
         etherFiRestakeProxy = IEtherFiRestakeProxy(_restakingPoolAddresses[0]);
         zircuitRestakeProxy = IZircuitRestakeProxy(_restakingPoolAddresses[1]);
     }
@@ -74,16 +76,20 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
                 getFee(address(ethToken), address(restakingToken))
             );
         }
-
+        
         if (address(zircuitRestakeProxy) != address(0)) {
-            restakingToken.approve(
+            restakingToken.approve(address(etherFiRestakeProxy), restakingToken.balanceOf(address(this)));
+            console.log("NINVB => vao day 1 ", restakingToken.balanceOf(address(this)));
+            etherFiRestakeProxy.wrap(restakingToken.balanceOf(address(this)));
+            console.log("weETH %s", wrapRestakingToken.balanceOf(address(this)));
+            wrapRestakingToken.approve(
                 address(zircuitRestakeProxy),
-                restakingToken.balanceOf(address(this))
+                wrapRestakingToken.balanceOf(address(this))
             );
             zircuitRestakeProxy.depositFor(
-                address(restakingToken),
+                address(wrapRestakingToken),
                 address(this),
-                restakingToken.balanceOf(address(this))
+                wrapRestakingToken.balanceOf(address(this))
             );
         }
     }

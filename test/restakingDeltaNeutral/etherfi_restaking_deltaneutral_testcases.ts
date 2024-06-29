@@ -61,6 +61,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
     const wethAddress = WETH_ADDRESS[chainId] || '';
     const eethAddress = EETH_ADDRESS[chainId] || '';
     const ezEthAddress = EZETH_ADDRESS[chainId] || '';
+    const weEthAddress = WEETH_ADDRESS[chainId] || '';
     const swapRouterAddress = UNISWAP_ROUTER_ADDRESS[chainId];
     const aevoAddress = AEVO_ADDRESS[chainId];
     const aevoConnectorAddress = AEVO_CONNECTOR_ADDRESS[chainId];
@@ -127,6 +128,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
                 aevoRecipientAddress,
                 aevoConnectorAddress,
                 eethAddress,
+                weEthAddress,
                 BigInt(1 * 1e6),
                 [etherfiDepositAddress, zircuitDepositAddress],
                 await uniSwapContract.getAddress(),
