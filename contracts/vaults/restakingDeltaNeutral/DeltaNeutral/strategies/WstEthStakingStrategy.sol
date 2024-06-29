@@ -10,7 +10,6 @@ contract WstEthStakingStrategy is BaseRestakingStrategy {
 
     function ethRestaking_Initialize(
         address _restakingToken,
-        address _wrapRestakingToken,
         address _usdcAddress,
         address _ethAddress,
         address _swapAddress,
@@ -19,7 +18,7 @@ contract WstEthStakingStrategy is BaseRestakingStrategy {
         uint24[] memory _fees
     ) internal override
     {
-        super.ethRestaking_Initialize(_restakingToken, _wrapRestakingToken, _usdcAddress, _ethAddress, _swapAddress, _token0s, _token1s, _fees);
+        super.ethRestaking_Initialize(_restakingToken, _usdcAddress, _ethAddress, _swapAddress, _token0s, _token1s, _fees);
     }
 
     function syncRestakingBalance() internal override{

@@ -31,7 +31,6 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
     ) internal {
         super.ethRestaking_Initialize(
             _restakingToken,
-            _wrapRestakingToken,
             _usdcAddress,
             _ethAddress,
             _swapAddress,
@@ -83,14 +82,13 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
         if (address(zircuitRestakeProxy) != address(0)) {
             restakingToken.approve(address(weEth), restakingToken.balanceOf(address(this)));
             weEth.wrap(restakingToken.balanceOf(address(this)));
-            wrapRestakingToken.approve(
+            IERC20(address(weEth)).approve(
                 address(zircuitRestakeProxy),
-                wrapRestakingToken.balanceOf(address(this))
-            );
+                IERC20(address(weEth)).balanceOf(address(this)));
             zircuitRestakeProxy.depositFor(
-                address(wrapRestakingToken),
+                address(weEth),
                 address(this),
-                wrapRestakingToken.balanceOf(address(this))
+                IERC20(address(weEth)).balanceOf(address(this))
             );
         }
     }

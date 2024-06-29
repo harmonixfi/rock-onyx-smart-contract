@@ -16,7 +16,6 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
     IERC20 usdcToken;
     IERC20 ethToken;
     IERC20 internal restakingToken;
-    IERC20 internal wrapRestakingToken;
     address[] internal restakingPoolAddresses;
     EthRestakingState internal restakingState;
 
@@ -29,7 +28,6 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
 
     function ethRestaking_Initialize(
         address _restakingToken,
-        address _wrapRestakingToken,
         address _usdcAddress,
         address _ethAddress,
         address _swapAddress,
@@ -40,7 +38,6 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
         usdcToken = IERC20(_usdcAddress);
         ethToken = IERC20(_ethAddress);
         restakingToken = IERC20(_restakingToken);
-        wrapRestakingToken = IERC20(_wrapRestakingToken);
         baseSwapVault_Initialize(_swapAddress, _token0s, _token1s, _fees);
     }
 
