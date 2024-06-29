@@ -14,23 +14,26 @@ import {
   KELP_DEPOSIT_ADDRESS,
   KELP_DEPOSIT_REF_ID,
   UNI_SWAP_ADDRESS,
-} from "../constants";
-import * as Contracts from "../typechain-types";
+  KELPDAO_TOKEN_HOLDER_ADDRESS,
+  AddressZero,
+} from "../../constants";
+import * as Contracts from "../../typechain-types";
+import { Signer } from "ethers";
 
 const chainId: CHAINID = network.config.chainId ?? 0;
 console.log("chainId ", chainId);
 
-const usdcAddress = USDC_ADDRESS[chainId] || "";
-const usdtAddress = USDT_ADDRESS[chainId] || "";
-const daiAddress = DAI_ADDRESS[chainId] || "";
-const wethAddress = WETH_ADDRESS[chainId] || "";
-const rsEthAddress = RSETH_ADDRESS[chainId] || "";
-const uniSwapAddress = UNI_SWAP_ADDRESS[chainId] || "";
-const aevoAddress = AEVO_ADDRESS[chainId] || "";
-const aevoConnectorAddress = AEVO_CONNECTOR_ADDRESS[chainId] || "";
-const kelpDepositAddress = KELP_DEPOSIT_ADDRESS[chainId] || "";
-const kelpDepositRefId = KELP_DEPOSIT_REF_ID[chainId] || "";
-const zircuitDepositAddress = ZIRCUIT_DEPOSIT_ADDRESS[chainId] || "";
+const usdcAddress = USDC_ADDRESS[chainId] || AddressZero;
+const usdtAddress = USDT_ADDRESS[chainId] || AddressZero;
+const daiAddress = DAI_ADDRESS[chainId] || AddressZero;
+const wethAddress = WETH_ADDRESS[chainId] || AddressZero;
+const rsEthAddress = RSETH_ADDRESS[chainId] || AddressZero;
+const uniSwapAddress = UNI_SWAP_ADDRESS[chainId] || AddressZero;
+const aevoAddress = AEVO_ADDRESS[chainId] || AddressZero;
+const aevoConnectorAddress = AEVO_CONNECTOR_ADDRESS[chainId] || AddressZero;
+const kelpDepositAddress = KELP_DEPOSIT_ADDRESS[chainId] || AddressZero;
+const kelpDepositRefId = KELP_DEPOSIT_REF_ID[chainId] || AddressZero;
+const kelpdaoHolderAddress = KELPDAO_TOKEN_HOLDER_ADDRESS[chainId] || AddressZero;
 
 const contractAdmin = '0x0d4eef21D898883a6bd1aE518B60fEf7A951ce4D';
 
@@ -38,13 +41,17 @@ const contractAdmin = '0x0d4eef21D898883a6bd1aE518B60fEf7A951ce4D';
 const aevoRecipientAddress = "0x0F8C856907DfAFB96871AbE09a76586311632ef8";
 
 let kelpRestakingDNVault: Contracts.KelpRestakingDeltaNeutralVault;
+let deployer: Signer;
 
 async function deployKelpRestakingDeltaNeutralVault() {
   const kelpRestakingDeltaNeutralVault = await ethers.getContractFactory(
     "KelpRestakingDeltaNeutralVault"
   );
 
-  kelpRestakingDNVault = await kelpRestakingDeltaNeutralVault.deploy(
+  kelpRestakingDNVault = await kelpRestakingDeltaNeutralVault.deploy();
+  await kelpRestakingDNVault.waitForDeployment();
+
+  kelpRestakingDNVault.connect(deployer).initialize(
     contractAdmin,
     usdcAddress,
     6,
@@ -57,14 +64,14 @@ async function deployKelpRestakingDeltaNeutralVault() {
     aevoConnectorAddress,
     rsEthAddress,
     BigInt(1 * 1e6),
-    [kelpDepositAddress, zircuitDepositAddress],
+    [kelpDepositAddress, kelpdaoHolderAddress],
     kelpDepositRefId,
     uniSwapAddress,
     [usdcAddress, rsEthAddress, usdtAddress, daiAddress],
     [wethAddress, wethAddress, usdcAddress, usdtAddress],
-    [500, 100, 100, 100]
+    [500, 100, 100, 100],
+    chainId
   );
-  await kelpRestakingDNVault.waitForDeployment();
 
   console.log(
     "deploy kelpRestakingDNVault successfully: %s",
@@ -73,7 +80,7 @@ async function deployKelpRestakingDeltaNeutralVault() {
 }
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
+  [deployer] = await ethers.getSigners();
 
   console.log(
     "Deploying contracts with the account:",

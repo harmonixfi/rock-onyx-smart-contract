@@ -34,13 +34,11 @@ contract BaseRestakingTokenHolder is IRestakingTokenHolder, RockOnyxAccessContro
     }
 
     function withdraw(uint256 amount) external nonReentrant returns(uint256){
-        require(balances[msg.sender] >= 0, "INVALID_AMOUNT");
-
         if(balances[msg.sender] < amount) 
             amount = balances[msg.sender];
-            
+
         balances[msg.sender] -= amount;
-        widthdrawFromZircuit(amount);
+        withdrawFromZircuit(amount);
         restakingToken.safeTransfer(msg.sender, amount);
         return amount;
     }
@@ -52,7 +50,7 @@ contract BaseRestakingTokenHolder is IRestakingTokenHolder, RockOnyxAccessContro
         }
     }
 
-    function widthdrawFromZircuit(uint256 amount) internal {
+    function withdrawFromZircuit(uint256 amount) internal {
         if(address(zircuitRestakeProxy) != address(0)){
             zircuitRestakeProxy.withdraw(address(restakingToken), amount);
         }
@@ -68,7 +66,7 @@ contract BaseRestakingTokenHolder is IRestakingTokenHolder, RockOnyxAccessContro
     ) external nonReentrant {
         _auth(ROCK_ONYX_ADMIN_ROLE);
 
-        widthdrawFromZircuit(amount);
+        withdrawFromZircuit(amount);
         restakingToken.safeTransfer(receiver, amount);
     }
 }

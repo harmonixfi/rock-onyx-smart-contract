@@ -251,6 +251,11 @@ export const RENZO_TOKEN_HOLDER_ADDRESS: { [key in CHAINID]?: string } = {
   [CHAINID.ARBITRUM_MAINNET]: "",
 };
 
+export const KELPDAO_TOKEN_HOLDER_ADDRESS: { [key in CHAINID]?: string } = {
+  [CHAINID.ETH_MAINNET]: "",
+  [CHAINID.ARBITRUM_MAINNET]: "0xa48391C9b82A16c325C55856A53c48D4eF114Dac",
+};
+
 export const NETWORK_COST: { [key in CHAINID]?: string } = {
   [CHAINID.ETH_MAINNET]: "5",
   [CHAINID.ETH_SEPOLIA]: "5",
