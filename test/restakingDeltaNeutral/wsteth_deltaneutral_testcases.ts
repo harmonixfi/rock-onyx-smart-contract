@@ -106,7 +106,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
         wstethAddress,
         BigInt(1 * 1e6),
         await uniSwapContract.getAddress(),
-		AddressZero,
+		    AddressZero,
         [wethAddress, wstethAddress, usdtAddress],
         [usdcAddress, wethAddress, usdcAddress],
         [500, 100, 100],
@@ -211,12 +211,12 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
     await deposit(user1, 10 * 1e6, usdc, usdc);
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     await deposit(user1, 50 * 1e6, usdc, usdc);
     await deposit(user1, 1350 * 1e6, usdc, usdc);
     await deposit(user1, 10 * 1e6, usdc, usdc);
     await deposit(user1, 10 * 1e6, usdc, usdc);
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     console.log("-------------open position---------------");
     let openPositionTx1 = await wstEthStakingDNVault
       .connect(admin)
@@ -274,7 +274,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
 
     console.log("-------------open position---------------");
@@ -295,7 +295,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------open position---------------");
@@ -364,7 +364,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------Users initial withdrawals---------------");
@@ -424,7 +424,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(inititalDeposit * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
 
     console.log("-------------open position---------------");
     let ethPrice = await getEthPrice();
@@ -876,25 +876,29 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       "WstEthStakingDeltaNeutralVault"
     );
 
-    const newContract = await newContractFactory.deploy(
-      admin,
-      usdcAddress,
-      6,
-      BigInt(5 * 1e6),
-      BigInt(1000000 * 1e6),
-      networkCost,
-      wethAddress,
-      perDexAddress,
-      perDexRecipientAddress,
-      perDexConnectorAddress,
-      wstethAddress,
-      BigInt(1 * 1e6),
-      await uniSwapContract.getAddress(),
-      AddressZero,
-      [wethAddress, wstethAddress,  usdtAddress],
-      [usdcAddress, wethAddress, usdcAddress],
-      [500, 100, 100],
-      chainId
+    const newContract = await upgrades.deployProxy(
+      newContractFactory,
+      [
+        await admin.getAddress(),
+        usdcAddress,
+        6,
+        BigInt(5 * 1e6),
+        BigInt(1000000 * 1e6),
+        networkCost,
+        wethAddress,
+        perDexAddress,
+        perDexRecipientAddress,
+        perDexConnectorAddress,
+        wstethAddress,
+        BigInt(1 * 1e6),
+        await uniSwapContract.getAddress(),
+		AddressZero,
+        [wethAddress, wstethAddress, usdtAddress],
+        [usdcAddress, wethAddress, usdcAddress],
+        [500, 100, 100],
+		chainId
+      ],
+      { initializer: "initialize" }
     );
     await newContract.waitForDeployment();
 

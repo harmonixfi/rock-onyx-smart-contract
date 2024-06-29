@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
 import "../../../extensions/Uniswap/Uniswap.sol";
@@ -20,7 +19,6 @@ abstract contract BaseDeltaNeutralVault is
     uint256 internal initialPPS;
     uint256 internal networkCost;
     using ShareMath for uint256;
-    using SafeERC20 for IERC20;
 
     mapping(address => DepositReceipt) internal depositReceipts;
     mapping(address => Withdrawal) internal withdrawals;
@@ -85,14 +83,13 @@ abstract contract BaseDeltaNeutralVault is
         uint256 assetDepositAmount = (tokenIn == vaultParams.asset) ? amount : 
                             (tokenIn == transitToken) ? amount * swapProxy.getPriceOf(tokenIn, vaultParams.asset) / 10 ** (ERC20(tokenIn).decimals()) :
                             (amount * swapProxy.getPriceOf(tokenIn, transitToken) * swapProxy.getPriceOf(transitToken, vaultParams.asset)) / 10 ** (ERC20(tokenIn).decimals() + (ERC20(transitToken).decimals()));
-
         require(assetDepositAmount >= vaultParams.minimumSupply, "MIN_AMOUNT");
         require(_totalValueLocked() + assetDepositAmount <= vaultParams.cap, "EXCEED_CAP");
 
-        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amount);
+        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amount);
         if(tokenIn != vaultParams.asset){
             if(tokenIn != transitToken){
-                IERC20(tokenIn).approve(address(swapProxy), amount);
+                TransferHelper.safeApprove(tokenIn, address(swapProxy), amount);
                 amount = swapProxy.swapTo(
                     address(this),
                     address(tokenIn),
@@ -102,7 +99,7 @@ abstract contract BaseDeltaNeutralVault is
                 );
             }
 
-            IERC20(transitToken).approve(address(swapProxy), amount);
+            TransferHelper.safeApprove(transitToken, address(swapProxy), amount);
             amount = swapProxy.swapTo(
                 address(this),
                 address(transitToken),
@@ -111,6 +108,7 @@ abstract contract BaseDeltaNeutralVault is
                 getFee(address(transitToken), address(vaultParams.asset))
             );
         }
+
         uint256 shares = _issueShares(amount);
         depositReceipts[msg.sender].shares += shares;
         depositReceipts[msg.sender].depositAmount += amount;
@@ -136,6 +134,7 @@ abstract contract BaseDeltaNeutralVault is
         require(withdrawals[msg.sender].shares == 0, "INVALID_WD_STATE");
 
         uint256 pps = _getPricePerShare();
+        console.log("pps ", pps);
         uint256 totalShareAmount = depositReceipt.shares * pps / 1e6;
         uint256 totalProfit = totalShareAmount <= depositReceipt.depositAmount ? 0 : (totalShareAmount - depositReceipt.depositAmount);
         uint256 withdrawProfit = (totalProfit * shares) / depositReceipt.shares;
@@ -148,6 +147,7 @@ abstract contract BaseDeltaNeutralVault is
         withdrawals[msg.sender].profit = withdrawProfit;
         withdrawals[msg.sender].performanceFee = performanceFee;
         withdrawals[msg.sender].withdrawAmount = ShareMath.sharesToAsset(shares, pps, vaultParams.decimals);
+        
         
         emit RequestFunds(msg.sender, withdrawals[msg.sender].withdrawAmount, shares);
 
@@ -204,7 +204,7 @@ abstract contract BaseDeltaNeutralVault is
         withdrawals[msg.sender].shares -= shares;
         vaultState.totalShares -= shares;
 
-        IERC20(vaultParams.asset).safeTransfer(msg.sender, withdrawAmount - feeAmount);
+        TransferHelper.safeTransfer(vaultParams.asset, msg.sender, withdrawAmount - feeAmount);
         emit Withdrawn(msg.sender, withdrawAmount, withdrawals[msg.sender].shares);
         
         // migration
@@ -221,12 +221,12 @@ abstract contract BaseDeltaNeutralVault is
 
         if (amount > vaultState.totalFeePoolAmount) {
             vaultState.totalFeePoolAmount = 0;
-            IERC20(vaultParams.asset).safeTransfer(msg.sender, vaultState.totalFeePoolAmount);
+            TransferHelper.safeTransfer(vaultParams.asset, receiver, vaultState.totalFeePoolAmount);
             return;
         }
 
         vaultState.totalFeePoolAmount -= amount;
-        IERC20(vaultParams.asset).safeTransfer(receiver, amount);
+        TransferHelper.safeTransfer(vaultParams.asset, receiver, amount);
     }
 
     function getVaultState() external view returns (VaultState memory) {
@@ -331,10 +331,10 @@ abstract contract BaseDeltaNeutralVault is
      */
     function _getPricePerShare() internal view returns (uint256) {
         if (vaultState.totalShares == 0) return initialPPS;
-
+        console.log("_totalValueLocked ", _totalValueLocked());
+        console.log("totalShares ", vaultState.totalShares);
         return
-            (_totalValueLocked() * 10 ** vaultParams.decimals) /
-            vaultState.totalShares;
+            (_totalValueLocked() * 10 ** vaultParams.decimals) / vaultState.totalShares;
     }
 
     function emergencyShutdown(

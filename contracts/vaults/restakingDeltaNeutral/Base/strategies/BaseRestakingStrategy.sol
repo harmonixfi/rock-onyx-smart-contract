@@ -12,8 +12,10 @@ import "../../structs/RestakingDeltaNeutralStruct.sol";
 import "hardhat/console.sol";
 
 abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl, ReentrancyGuardUpgradeable {
-    IERC20 usdcToken;
-    IERC20 ethToken;
+    uint64 internal constant ARBTRIUM_NETWORK = 42161;
+    uint64 internal constant ETHEREUM_NETWORK = 1;
+    IERC20 internal usdcToken;
+    IERC20 internal ethToken;
     IERC20 internal restakingToken;
     IRestakingTokenHolder internal restakingTokenHolder;
     EthRestakingState internal restakingState;

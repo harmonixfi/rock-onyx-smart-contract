@@ -9,9 +9,6 @@ import "./../../Base/strategies/BaseRestakingStrategy.sol";
 import "./../../Base/BaseSwapVault.sol";
 
 contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
-    uint64 private constant ARBTRIUM_NETWORK = 42161;
-    uint64 private constant ETHEREUM_NETWORK = 1;
-
     IWithdrawRestakingPool private kelpWithdrawRestakingPool;
     IKelpRestakeProxy private kelpRestakeProxy;
     IERC20 private stakingToken;
@@ -60,6 +57,7 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
             );
         }
         
+        restakingToken.approve(address(restakingTokenHolder), restakingToken.balanceOf(address(this)));
         restakingTokenHolder.deposit(restakingToken.balanceOf(address(this)));
     }
 
@@ -69,7 +67,7 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
             kelpWithdrawRestakingPool.withdraw(address(restakingToken), withdrawnAmount);
         }else{
             uint256 stakingTokenAmount = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
-            uint256 withdrawnAmount = restakingTokenHolder.withdraw(stakingTokenAmount);    
+            uint256 withdrawnAmount = restakingTokenHolder.withdraw(stakingTokenAmount);
             if(stakingTokenAmount == withdrawnAmount){
                 restakingToken.approve(address(swapProxy), stakingTokenAmount);
                     swapProxy.swapToWithOutput(
@@ -78,18 +76,18 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
                         ethAmount,
                         address(ethToken),
                         getFee(address(restakingToken), address(ethToken))
-                    );    
+                    ); 
                 return;
             }
 
             restakingToken.approve(address(swapProxy), stakingTokenAmount);
-                    swapProxy.swapTo(
-                        address(this),
-                        address(restakingToken),
-                        stakingTokenAmount,
-                        address(ethToken),
-                        getFee(address(restakingToken), address(ethToken))
-                    );    
+                swapProxy.swapTo(
+                    address(this),
+                    address(restakingToken),
+                    stakingTokenAmount,
+                    address(ethToken),
+                    getFee(address(restakingToken), address(ethToken))
+                );    
         }
     }
 
