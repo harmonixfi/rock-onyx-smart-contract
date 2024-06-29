@@ -134,7 +134,6 @@ abstract contract BaseDeltaNeutralVault is
         require(withdrawals[msg.sender].shares == 0, "INVALID_WD_STATE");
 
         uint256 pps = _getPricePerShare();
-        console.log("pps ", pps);
         uint256 totalShareAmount = depositReceipt.shares * pps / 1e6;
         uint256 totalProfit = totalShareAmount <= depositReceipt.depositAmount ? 0 : (totalShareAmount - depositReceipt.depositAmount);
         uint256 withdrawProfit = (totalProfit * shares) / depositReceipt.shares;
@@ -331,8 +330,6 @@ abstract contract BaseDeltaNeutralVault is
      */
     function _getPricePerShare() internal view returns (uint256) {
         if (vaultState.totalShares == 0) return initialPPS;
-        console.log("_totalValueLocked ", _totalValueLocked());
-        console.log("totalShares ", vaultState.totalShares);
         return
             (_totalValueLocked() * 10 ** vaultParams.decimals) / vaultState.totalShares;
     }

@@ -246,6 +246,11 @@ export const UNI_SWAP_ADDRESS: { [key in CHAINID]?: string } = {
   [CHAINID.BASE_MAINNET]: "0x85487BBe787D5743905f426996eFf50a6aa2189C",
 };
 
+export const RENZO_TOKEN_HOLDER_ADDRESS: { [key in CHAINID]?: string } = {
+  [CHAINID.ETH_MAINNET]: "",
+  [CHAINID.ARBITRUM_MAINNET]: "",
+};
+
 export const NETWORK_COST: { [key in CHAINID]?: string } = {
   [CHAINID.ETH_MAINNET]: "5",
   [CHAINID.ETH_SEPOLIA]: "5",
