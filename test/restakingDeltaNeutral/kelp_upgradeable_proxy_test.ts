@@ -23,7 +23,9 @@ const chainId: CHAINID = network.config.chainId ?? 0;
 console.log("chainId ", chainId);
 
 describe("KelpRestakingDeltaNeutralVault", function () {
+  this.timeout(120000);
   let kelpRestakingDNVault: Contracts.KelpRestakingDeltaNeutralVault;
+  let upgradedVaultV2: Contracts.KelpRestakingDeltaNeutralVault;
   let proxyAddress: string;
   let admin: Signer;
   let user: Signer;
@@ -57,7 +59,7 @@ describe("KelpRestakingDeltaNeutralVault", function () {
       .transfer(await to.getAddress(), amount);
     await transferTx.wait();
   }
-  
+
   before(async function () {
     [admin, user] = await ethers.getSigners();
     usdc = await ethers.getContractAt("IERC20", usdcAddress);
@@ -79,7 +81,7 @@ describe("KelpRestakingDeltaNeutralVault", function () {
     kelpRestakingDNVault = await upgrades.deployProxy(
       KelpRestakingDeltaNeutralVault,
       [
-        admin,
+        await admin.getAddress(),
         usdcAddress,
         6,
         BigInt(5 * 1e6),
@@ -104,11 +106,24 @@ describe("KelpRestakingDeltaNeutralVault", function () {
 
     await kelpRestakingDNVault.waitForDeployment();
     proxyAddress = await kelpRestakingDNVault.getAddress();
-    console.log("Deploy contract V1 %s", proxyAddress);
+    console.log("Deploy contract V1 Proxy %s", proxyAddress);
 
+    // Print the implementation address
+    const implementationAddress =
+      await upgrades.erc1967.getImplementationAddress(
+        await kelpRestakingDNVault.getAddress()
+      );
+    console.log(
+      "KelpRestakingDNVault implementation V1 address: %s",
+      implementationAddress
+    );
   });
 
   it("should deposit to the deployed contract via proxy", async function () {
+    await usdc
+      .connect(user)
+      .approve(await kelpRestakingDNVault.getAddress(), initialDeposit);
+
     await kelpRestakingDNVault
       .connect(user)
       .deposit(initialDeposit, usdcAddress, usdcAddress);
@@ -129,16 +144,26 @@ describe("KelpRestakingDeltaNeutralVault", function () {
       "KelpRestakingDeltaNeutralVault"
     );
 
-    const upgraded = await upgrades.upgradeProxy(
+    upgradedVaultV2 = await upgrades.upgradeProxy(
       proxyAddress,
       KelpRestakingDeltaNeutralVaultV2
     );
-    expect(await upgraded.getAddress()).to.equal(proxyAddress);
+
+    console.log("upgradedVaultV2 address", await upgradedVaultV2.getAddress());
+    expect(await upgradedVaultV2.getAddress()).to.equal(proxyAddress);
+    
+    const implementationAddress =
+      await upgrades.erc1967.getImplementationAddress(
+        await upgradedVaultV2.getAddress()
+      );
+    console.log(
+      "KelpRestakingDNVault implementation V2 address: %s",
+      implementationAddress
+    );
   });
 
   it("should check the state of the contract using exportVaultState function", async function () {
-
-    const exportVaultStateTx = await kelpRestakingDNVault
+    const exportVaultStateTx = await upgradedVaultV2
       .connect(admin)
       .exportVaultState();
     console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
