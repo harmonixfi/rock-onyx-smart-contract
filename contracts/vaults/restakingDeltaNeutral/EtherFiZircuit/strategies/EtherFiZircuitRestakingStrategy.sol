@@ -6,6 +6,7 @@ import "../../../../interfaces/IZircuitRestakeProxy.sol";
 import "../../../../interfaces/IEtherFiRestakeProxy.sol";
 import "../../../../interfaces/IWithdrawRestakingPool.sol";
 import "../../../../interfaces/IWETH.sol";
+import "../../../../interfaces/IWEETHWrap.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
@@ -13,6 +14,7 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
     IEtherFiRestakeProxy private etherFiRestakeProxy;
     IZircuitRestakeProxy private zircuitRestakeProxy;
     IWithdrawRestakingPool private etherfiWithdrawRestakingPool;
+    IWEETHWrap private weEth;
     IERC20 private stakingToken;
     string private refId;
 
@@ -39,6 +41,7 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
         );
         etherFiRestakeProxy = IEtherFiRestakeProxy(_restakingPoolAddresses[0]);
         zircuitRestakeProxy = IZircuitRestakeProxy(_restakingPoolAddresses[1]);
+        weEth = IWEETHWrap(_wrapRestakingToken);
     }
 
     function syncRestakingBalance() internal override {
@@ -78,10 +81,8 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
         }
         
         if (address(zircuitRestakeProxy) != address(0)) {
-            restakingToken.approve(address(etherFiRestakeProxy), restakingToken.balanceOf(address(this)));
-            console.log("NINVB => vao day 1 ", restakingToken.balanceOf(address(this)));
-            etherFiRestakeProxy.wrap(restakingToken.balanceOf(address(this)));
-            console.log("weETH %s", wrapRestakingToken.balanceOf(address(this)));
+            restakingToken.approve(address(weEth), restakingToken.balanceOf(address(this)));
+            weEth.wrap(restakingToken.balanceOf(address(this)));
             wrapRestakingToken.approve(
                 address(zircuitRestakeProxy),
                 wrapRestakingToken.balanceOf(address(this))
