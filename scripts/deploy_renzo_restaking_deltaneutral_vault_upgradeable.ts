@@ -9,9 +9,9 @@ import {
     AEVO_ADDRESS,
     AEVO_CONNECTOR_ADDRESS,
     EZETH_ADDRESS,
-    ZIRCUIT_DEPOSIT_ADDRESS,
     RENZO_DEPOSIT_ADDRESS,
-    UNI_SWAP_ADDRESS
+    UNI_SWAP_ADDRESS,
+    RENZO_TOKEN_HOLDER_ADDRESS
 } from "../constants";
 import * as Contracts from "../typechain-types";
 
@@ -27,7 +27,7 @@ const uniSwapAddress = UNI_SWAP_ADDRESS[chainId] || "";
 const aevoAddress = AEVO_ADDRESS[chainId] || "";
 const aevoConnectorAddress = AEVO_CONNECTOR_ADDRESS[chainId] || "";
 const renzoDepositAddress = RENZO_DEPOSIT_ADDRESS[chainId] || "";
-const zircuitDepositAddress = ZIRCUIT_DEPOSIT_ADDRESS[chainId] || "";
+const renzoTokenHolderAddress = RENZO_TOKEN_HOLDER_ADDRESS[chainId] || "";
 const admin = '0xDA323b84De8a94088a942F8Cc4437aC40ceE2C56';
 
 /** TEST */
@@ -56,7 +56,7 @@ async function deployRenzoRestakingDeltaNeutralVault() {
             aevoConnectorAddress,
             ezEthAddress,
             BigInt(1 * 1e6),
-            [renzoDepositAddress, zircuitDepositAddress],
+            [renzoDepositAddress, renzoTokenHolderAddress],
             uniSwapAddress,
             [usdcAddress, ezEthAddress, usdtAddress, daiAddress],
             [wethAddress, wethAddress, usdcAddress, usdtAddress],
