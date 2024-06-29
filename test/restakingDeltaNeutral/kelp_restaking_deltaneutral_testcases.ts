@@ -104,6 +104,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
   async function deployRestakingTokenHolderContract() {
     const factory = await ethers.getContractFactory("BaseRestakingTokenHolder");
     restakingTokenHolder = await factory.deploy(
+      admin,
       rsEthAddress,
       zircuitDepositAddress
     );

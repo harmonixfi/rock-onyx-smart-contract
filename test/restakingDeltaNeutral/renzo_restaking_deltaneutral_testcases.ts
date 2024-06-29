@@ -38,6 +38,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
   let usdc: Contracts.IERC20;
   let usdt: Contracts.IERC20;
   let dai: Contracts.IERC20;
+  let ezEth: Contracts.IERC20;
 
   const usdcImpersonatedSigner = USDC_IMPERSONATED_SIGNER_ADDRESS[chainId];
   const usdtImpersonatedSigner = USDT_IMPERSONATED_SIGNER_ADDRESS[chainId];
@@ -98,6 +99,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
   async function deployRestakingTokenHolderContract() {
     const factory = await ethers.getContractFactory("BaseRestakingTokenHolder");
     restakingTokenHolder = await factory.deploy(
+      admin,
       ezEthAddress,
       zircuitDepositAddress
     );
@@ -152,6 +154,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     usdc = await ethers.getContractAt("IERC20", usdcAddress);
     usdt = await ethers.getContractAt("IERC20", usdtAddress);
     dai = await ethers.getContractAt("IERC20", daiAddress);
+    ezEth = await ethers.getContractAt("IERC20", ezEthAddress);
 
     await deployPriceConsumerContract();
     await deployUniSwapContract();
@@ -327,7 +330,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     await openPositionTx.wait();
   });
 
-  it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
+  it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw -> emergency wd from restaking holder", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -401,6 +404,18 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
       user2Balance + BigInt(100 * 1e6) - networkCost,
       PRECISION
     );
+
+    const restakingHolderBalance = await restakingTokenHolder
+      .connect(admin)
+      .balanceOf(await renzoRestakingDNVault.getAddress());
+    console.log("restakingHolderBalance %s", restakingHolderBalance);
+
+    console.log("admin before withdraw %s", await ezEth.balanceOf(admin));
+    const emergencyWDFromHolderTx = await restakingTokenHolder
+      .connect(admin)
+      .emergencyShutdown(admin, BigInt(restakingHolderBalance));
+    await emergencyWDFromHolderTx.wait();
+    console.log("admin after withdraw %s", await ezEth.balanceOf(admin));
   });
 
   it.skip("user deposit -> deposit to perp dex -> withdraw", async function () {

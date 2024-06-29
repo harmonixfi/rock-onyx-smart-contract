@@ -62,12 +62,12 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
     }
 
     function withdrawFromRestakingProxy(uint256 ethAmount) internal override {
+        uint256 stakingTokenAmount = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
+        uint256 withdrawnAmount = restakingTokenHolder.withdraw(stakingTokenAmount);
+
         if(address(kelpRestakeProxy) != address(0) && address(kelpWithdrawRestakingPool) != address(0)) {
-            uint256 withdrawnAmount = restakingTokenHolder.withdraw(ethAmount);
             kelpWithdrawRestakingPool.withdraw(address(restakingToken), withdrawnAmount);
         }else{
-            uint256 stakingTokenAmount = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
-            uint256 withdrawnAmount = restakingTokenHolder.withdraw(stakingTokenAmount);
             if(stakingTokenAmount == withdrawnAmount){
                 restakingToken.approve(address(swapProxy), stakingTokenAmount);
                     swapProxy.swapToWithOutput(
