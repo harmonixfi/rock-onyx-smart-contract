@@ -1,4 +1,3 @@
-import { EtherFiZircuitRestakingStrategy } from './../../typechain-types/contracts/vaults/restakingDeltaNeutral/EtherFiZircuit/strategies/EtherFiZircuitRestakingStrategy';
 const { ethers, network } = require('hardhat');
 import { expect } from 'chai';
 
@@ -14,26 +13,21 @@ import {
     AEVO_CONNECTOR_ADDRESS,
     USDC_IMPERSONATED_SIGNER_ADDRESS,
     USDT_IMPERSONATED_SIGNER_ADDRESS,
-    DAI_IMPERSONATED_SIGNER_ADDRESS,
     ETH_PRICE_FEED_ADDRESS,
     USDT_PRICE_FEED_ADDRESS,
     DAI_PRICE_FEED_ADDRESS,
-    EZETH_ETH_PRICE_FEED_ADDRESS,
-    EZETH_ADDRESS,
     ZIRCUIT_DEPOSIT_ADDRESS,
     ETHERFI_DEPOSIT_ADDRESS,
     NETWORK_COST,
-    WETH_IMPERSONATED_SIGNER_ADDRESS,
     WEETH_ADDRESS,
     EETH_ADDRESS,
+    WEETH_ETH_PRICE_FEED_ADDRESS,
 } from '../../constants';
 import { BigNumberish, Signer } from 'ethers';
-import { log } from 'console';
 
 const chainId: CHAINID = network.config.chainId;
 console.log('chainId ', chainId);
 let aevoRecipientAddress: string;
-const ETH_AMOUNT = ethers.parseEther('1');
 const PRECISION = 2 * 1e6;
 
 describe('EtherFiRestakingDeltaNeutralVault', () => {
@@ -44,29 +38,22 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         user4: Signer;
 
     let etherfiRestakingDNVault: Contracts.EtherFiRestakingDeltaNeutralVault;
-    let etherfiRestakingStrategy: Contracts.EtherFiZircuitRestakingStrategy;
-    let weth: Contracts.IERC20;
     let usdc: Contracts.IERC20;
     let usdt: Contracts.IERC20;
-    let dai: Contracts.IERC20;
-    let eeth: Contracts.IERC20;
 
     const usdcImpersonatedSigner = USDC_IMPERSONATED_SIGNER_ADDRESS[chainId];
     const usdtImpersonatedSigner = USDT_IMPERSONATED_SIGNER_ADDRESS[chainId];
-    const daiImpersonatedSigner = DAI_IMPERSONATED_SIGNER_ADDRESS[chainId];
-    const wethImpersonatedSigner = WETH_IMPERSONATED_SIGNER_ADDRESS[chainId];
     const usdcAddress = USDC_ADDRESS[chainId] || '';
     const usdtAddress = USDT_ADDRESS[chainId] || '';
     const daiAddress = DAI_ADDRESS[chainId] || '';
     const wethAddress = WETH_ADDRESS[chainId] || '';
     const eethAddress = EETH_ADDRESS[chainId] || '';
-    const ezEthAddress = EZETH_ADDRESS[chainId] || '';
     const weEthAddress = WEETH_ADDRESS[chainId] || '';
     const swapRouterAddress = UNISWAP_ROUTER_ADDRESS[chainId];
     const aevoAddress = AEVO_ADDRESS[chainId];
     const aevoConnectorAddress = AEVO_CONNECTOR_ADDRESS[chainId];
     const ethPriceFeed = ETH_PRICE_FEED_ADDRESS[chainId];
-    const ezEth_EthPriceFeed = EZETH_ETH_PRICE_FEED_ADDRESS[chainId];
+    const weEth_EthPriceFeed = WEETH_ETH_PRICE_FEED_ADDRESS[chainId];
     const usdtPriceFeed = USDT_PRICE_FEED_ADDRESS[chainId];
     const daiPriceFeed = DAI_PRICE_FEED_ADDRESS[chainId];
     const etherfiDepositAddress = ETHERFI_DEPOSIT_ADDRESS[chainId];
@@ -81,9 +68,9 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
 
         priceConsumerContract = await factory.deploy(
             admin,
-            [wethAddress, ezEthAddress, usdtAddress, daiAddress],
+            [wethAddress, weEthAddress, usdtAddress, daiAddress],
             [usdcAddress, wethAddress, usdcAddress, usdtAddress],
-            [ethPriceFeed, ezEth_EthPriceFeed, usdtPriceFeed, daiPriceFeed]
+            [ethPriceFeed, weEth_EthPriceFeed, usdtPriceFeed, daiPriceFeed]
         );
         await priceConsumerContract.waitForDeployment();
 
@@ -111,12 +98,13 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
 
     async function deployEtherFiRestakingDeltaNeutralVault() {
         const etherFiRestakingDeltaNeutralVault =
-            await ethers.getContractFactory(
-                'EtherFiRestakingDeltaNeutralVault'
-            );
+        await ethers.getContractFactory(
+            'EtherFiRestakingDeltaNeutralVault'
+        );
 
-        etherfiRestakingDNVault =
-            await etherFiRestakingDeltaNeutralVault.deploy(
+        etherfiRestakingDNVault = await upgrades.deployProxy(
+            etherFiRestakingDeltaNeutralVault,
+            [
                 admin,
                 usdcAddress,
                 6,
@@ -127,15 +115,18 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
                 aevoAddress,
                 aevoRecipientAddress,
                 aevoConnectorAddress,
-                eethAddress,
                 weEthAddress,
+                eethAddress,
                 BigInt(1 * 1e6),
                 [etherfiDepositAddress, zircuitDepositAddress],
                 await uniSwapContract.getAddress(),
-                [usdcAddress, eethAddress, usdtAddress, daiAddress],
+                [usdcAddress, weEthAddress, usdtAddress, daiAddress],
                 [wethAddress, wethAddress, usdcAddress, usdtAddress],
-                [500, 100, 100, 100]
-            );
+                [500, 500, 100, 100],
+                chainId
+            ],
+            { initializer: "initialize" }
+        );
 
         await etherfiRestakingDNVault.waitForDeployment();
 
@@ -145,33 +136,15 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         );
     }
 
-    async function deployEtherFiRestakingStrategy() {
-        const etherFiZircuitRestakingStrategy = await ethers.getContractFactory(
-            'EtherFiZircuitRestakingStrategy'
-        );
-
-        etherfiRestakingStrategy = await etherFiZircuitRestakingStrategy.deploy();
-        await etherfiRestakingStrategy.waitForDeployment();
-
-        console.log(
-            'deploy etherfiRestakingStrategy successfully: %s',
-            await etherfiRestakingStrategy.getAddress()
-        );
-    }
-
     beforeEach(async function () {
         [admin, user1, user2, user3, user4] = await ethers.getSigners();
         aevoRecipientAddress = await user4.getAddress();
-        weth = await ethers.getContractAt("IERC20", wethAddress);
         usdc = await ethers.getContractAt('IERC20', usdcAddress);
         usdt = await ethers.getContractAt('IERC20', usdtAddress);
-        dai = await ethers.getContractAt('IERC20', daiAddress);
-        eeth = await ethers.getContractAt('IERC20', eethAddress);
 
         await deployPriceConsumerContract();
         await deployUniSwapContract();
         await deployEtherFiRestakingDeltaNeutralVault();
-        await deployEtherFiRestakingStrategy();
         console.log('deployEtherFiRestakingDeltaNeutralVault');
     });
 
@@ -209,14 +182,6 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         return totalValueLocked;
     }
 
-    async function depositToKelpDaoProxy() {
-        await expect(() =>
-            admin.sendTransaction({
-                to: etherfiRestakingStrategy.getAddress(),
-                value: ETH_AMOUNT,
-            })
-        ).to.changeEtherBalance(etherfiRestakingStrategy, ETH_AMOUNT);
-    }
 
     it("seed data", async () => {
         const usdcSigner = await ethers.getImpersonatedSigner(
@@ -224,9 +189,6 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         );
         const usdtSigner = await ethers.getImpersonatedSigner(
             usdtImpersonatedSigner
-        );
-        const daiSigner = await ethers.getImpersonatedSigner(
-            daiImpersonatedSigner
         );
 
         await transferForUser(usdc, usdcSigner, user1, 100000 * 1e6);
@@ -238,31 +200,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         await transferForUser(usdt, usdtSigner, user2, 100000 * 1e6);
     });
 
-    it.skip("test rock onyx access contral", async () => {
-        const ROCK_ONYX_ADMIN_ROLE = "0xdf7ae06225b060fdb3477e253632ba0fef61b138e661391f47b795efaa9c6388";
-        //grant role user2 to admin
-        const grantRoleTx = await etherfiRestakingDNVault.connect(admin).grantRole(ROCK_ONYX_ADMIN_ROLE, user2);
-        await grantRoleTx.wait();
-        //check user2 is admin
-        let hasRoleTx = await etherfiRestakingDNVault.connect(admin).hasRole(ROCK_ONYX_ADMIN_ROLE, user2);
-        console.log('hasRoleTx %s', hasRoleTx);
-        expect(hasRoleTx).to.equal(true);
-        //revoke role user admin
-        const revokeRoleTx = await etherfiRestakingDNVault.connect(user2).revokeRole(ROCK_ONYX_ADMIN_ROLE, admin);
-        await revokeRoleTx.wait();
-        //check role current user admin
-        hasRoleTx = await etherfiRestakingDNVault.connect(user2).hasRole(ROCK_ONYX_ADMIN_ROLE, admin);
-        console.log('hasRoleTx %s', hasRoleTx);
-        expect(hasRoleTx).to.equal(false);
-
-        await deposit(user1, 10 * 1e6, usdc, usdc);
-        await deposit(user2, 100 * 1e6, usdc, usdc);
-
-        let totalValueLock = await logAndReturnTotalValueLock();
-        expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
-    })
-
-    it("deposit to zircuit", async () => {
+    it.skip("deposit to zircuit", async () => {
         await deposit(user1, 10 * 1e6, usdc, usdc);
         await deposit(user2, 100 * 1e6, usdc, usdc);
 
@@ -275,5 +213,78 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
             .openPosition(BigInt(0.01 * 1e18));
         await openPositionTx.wait();
         console.log('NINVB => openPositionTx ', await openPositionTx);
-    }) 
+    });
+
+    it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
+        this.timeout(120000);
+        console.log(
+          "-------------deposit to restakingDeltaNeutralVault---------------"
+        );
+        await deposit(user1, 100 * 1e6, usdc, usdc);
+        await deposit(user2, 200 * 1e6, usdc, usdc);
+    
+        let totalValueLock = await logAndReturnTotalValueLock();
+        expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
+    
+        console.log("-------------deposit to vendor on aevo---------------");
+        await etherfiRestakingDNVault.connect(admin).depositToVendor(500000);
+          totalValueLock = await logAndReturnTotalValueLock();
+    
+        console.log("-------------open position---------------");
+        const openPositionTx = await etherfiRestakingDNVault
+          .connect(admin)
+          .openPosition(BigInt(0.02 * 1e18));
+        await openPositionTx.wait();
+    
+        console.log("-------------sync restaking balance---------------");
+        const syncBalanceTx = await etherfiRestakingDNVault
+          .connect(admin)
+          .syncBalance(150 * 1e6);
+        await syncBalanceTx.wait();
+
+        console.log("-------------sync restaking balance---------------");
+        const syncBalanceTx1 = await etherfiRestakingDNVault
+          .connect(admin)
+          .syncBalance(150 * 1e6);
+        await syncBalanceTx1.wait();
+    
+        console.log("-------------close position---------------");
+        const closePositionTx = await etherfiRestakingDNVault
+          .connect(admin)
+          .closePosition(BigInt(0.01 * 1e18));
+        await closePositionTx.wait();
+    
+        console.log("-------------Users initial withdrawals---------------");
+        const initiateWithdrawalTx1 = await etherfiRestakingDNVault
+          .connect(user2)
+          .initiateWithdrawal(100 * 1e6);
+        await initiateWithdrawalTx1.wait();
+    
+        await usdc
+          .connect(admin)
+          .approve(await etherfiRestakingDNVault.getAddress(), 50 * 1e6);
+        const handlePostWithdrawTx = await etherfiRestakingDNVault
+          .connect(admin)
+          .handlePostWithdrawFromVendor(50 * 1e6);
+        await handlePostWithdrawTx.wait();
+    
+        console.log("-------------handleWithdrawalFunds---------------");
+        await initiateWithdrawalTx1.wait();
+    
+        console.log("-------------complete withdrawals---------------");
+        let user2Balance = await usdc.connect(user2).balanceOf(user2);
+        console.log("usdc of user before withdraw %s", user2Balance);
+    
+        const completeWithdrawalTx = await etherfiRestakingDNVault
+          .connect(user2)
+          .completeWithdrawal(100 * 1e6);
+        await completeWithdrawalTx.wait();
+    
+        let user2BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
+        console.log("usdc of user after withdraw %s", user2BalanceAfterWithdraw);
+        expect(user2BalanceAfterWithdraw).to.approximately(
+          user2Balance + BigInt(100 * 1e6) - networkCost,
+          PRECISION
+        );
+      });
 });

@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../Base/BaseDeltaNeutralVault.sol";
 import "./strategies/EtherFiZircuitRestakingStrategy.sol";
 import "./../Base/strategies/PerpDexStrategy.sol";
 import "./../structs/RestakingDeltaNeutralStruct.sol";
 
 contract EtherFiRestakingDeltaNeutralVault is
+    Initializable,
     EtherFiZircuitRestakingStrategy,
     PerpDexStrategy,
     BaseDeltaNeutralVault
 {
-    constructor(
+    function initialize(
         address _admin,
         address _usdc,
         uint8 _decimals,
@@ -23,23 +25,20 @@ contract EtherFiRestakingDeltaNeutralVault is
         address _perpDexReceiver,
         address _perpDexConnector,
         address _restakingToken,
-        address _wrapRestakingToken,
+        address _eEthToken,
         uint256 _initialPPS,
         address[] memory _stakingProxies,
         address _swapProxy,
         address[] memory _token0s,
         address[] memory _token1s,
-        uint24[] memory _fees
-    )
-        EtherFiZircuitRestakingStrategy()
-        PerpDexStrategy()
-        BaseDeltaNeutralVault()
-    {
+        uint24[] memory _fees,
+        uint64 _network
+    ) public initializer {
         baseDeltaNeutralVault_Initialize(_admin, _usdc, _decimals, _minimumSupply, _cap, _networkCost, _initialPPS, _swapProxy, _token0s, _token1s, _fees);
-        ethRestaking_Initialize(_restakingToken, _wrapRestakingToken, _usdc, _weth, _stakingProxies, _swapProxy, _token0s, _token1s, _fees);
+        ethRestaking_Initialize(_restakingToken, _eEthToken, _usdc, _weth, _stakingProxies, _swapProxy, _token0s, _token1s, _fees, _network);
         perpDex_Initialize(_perpDexAddress, _perpDexReceiver, _usdc, _perpDexConnector);
     }
-
+    
     /**
      * @notice allocate assets to strategies
      */

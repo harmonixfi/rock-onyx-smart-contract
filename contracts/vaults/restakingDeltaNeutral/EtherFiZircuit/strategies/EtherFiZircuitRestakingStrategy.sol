@@ -6,7 +6,7 @@ import "../../../../interfaces/IZircuitRestakeProxy.sol";
 import "../../../../interfaces/IEtherFiRestakeProxy.sol";
 import "../../../../interfaces/IWithdrawRestakingPool.sol";
 import "../../../../interfaces/IWETH.sol";
-import "../../../../interfaces/IWEETHWrap.sol";
+import "../../../../interfaces/IWEETH.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
@@ -14,20 +14,21 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
     IEtherFiRestakeProxy private etherFiRestakeProxy;
     IZircuitRestakeProxy private zircuitRestakeProxy;
     IWithdrawRestakingPool private etherfiWithdrawRestakingPool;
-    IWEETHWrap private weEth;
+    address private eEthAddress;
     IERC20 private stakingToken;
     string private refId;
 
     function ethRestaking_Initialize(
         address _restakingToken,
-        address _wrapRestakingToken,
+        address _eEthAddress,
         address _usdcAddress,
         address _ethAddress,
         address[] memory _restakingPoolAddresses,
         address _swapAddress,
         address[] memory _token0s,
         address[] memory _token1s,
-        uint24[] memory _fees
+        uint24[] memory _fees,
+        uint64 _network
     ) internal {
         super.ethRestaking_Initialize(
             _restakingToken,
@@ -36,38 +37,32 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
             _swapAddress,
             _token0s,
             _token1s,
-            _fees
+            _fees,
+            _network
         );
+
+        eEthAddress = _eEthAddress;
         etherFiRestakeProxy = IEtherFiRestakeProxy(_restakingPoolAddresses[0]);
         zircuitRestakeProxy = IZircuitRestakeProxy(_restakingPoolAddresses[1]);
-        weEth = IWEETHWrap(_wrapRestakingToken);
     }
 
     function syncRestakingBalance() internal override {
         uint256 restakingTokenAmount = restakingToken.balanceOf(address(this));
-        if (address(zircuitRestakeProxy) != address(0)) {
-            restakingTokenAmount += zircuitRestakeProxy.balance(
-                address(restakingToken),
-                address(this)
-            );
+
+        if(address(zircuitRestakeProxy) != address(0)){
+            restakingTokenAmount += zircuitRestakeProxy.balance(address(restakingToken), address(this));
         }
 
-        uint256 ethAmount = (restakingTokenAmount *
-            swapProxy.getPriceOf(address(restakingToken), address(ethToken))) /
-            1e18;
-        restakingState.totalBalance =
-            restakingState.unAllocatedBalance +
-            (ethAmount *
-                swapProxy.getPriceOf(address(ethToken), address(usdcToken))) /
-            1e18;
+        uint256 ethAmount = restakingTokenAmount * swapProxy.getPriceOf(address(restakingToken), address(ethToken));
+        restakingState.totalBalance = restakingState.unAllocatedBalance + ethAmount * swapProxy.getPriceOf(address(ethToken), address(usdcToken)) / 1e18;
     }
 
     function depositToRestakingProxy(uint256 ethAmount) internal override {
         if (address(etherFiRestakeProxy) != address(0)) {
             IWETH(address(ethToken)).withdraw(ethAmount);
             etherFiRestakeProxy.deposit{value: ethAmount}();
-
-            console.log("eETH %s", restakingToken.balanceOf(address(this)));
+            IERC20(eEthAddress).approve(address(restakingToken), IERC20(eEthAddress).balanceOf(address(this)));
+            IWEETH(address(restakingToken)).wrap(IERC20(eEthAddress).balanceOf(address(this)));
         } else {
             ethToken.approve(address(swapProxy), ethAmount);
             swapProxy.swapTo(
@@ -80,51 +75,44 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
         }
         
         if (address(zircuitRestakeProxy) != address(0)) {
-            restakingToken.approve(address(weEth), restakingToken.balanceOf(address(this)));
-            weEth.wrap(restakingToken.balanceOf(address(this)));
-            IERC20(address(weEth)).approve(
-                address(zircuitRestakeProxy),
-                IERC20(address(weEth)).balanceOf(address(this)));
-            zircuitRestakeProxy.depositFor(
-                address(weEth),
-                address(this),
-                IERC20(address(weEth)).balanceOf(address(this))
-            );
+            restakingToken.approve(address(zircuitRestakeProxy), restakingToken.balanceOf(address(this)));
+            zircuitRestakeProxy.depositFor(address(restakingToken), address(this), restakingToken.balanceOf(address(this)));
         }
     }
 
     function withdrawFromRestakingProxy(uint256 ethAmount) internal override {
-        uint256 stakingTokenAmount = swapProxy.getAmountInMaximum(
-            address(restakingToken),
-            address(ethToken),
-            ethAmount
-        );
+        uint256 reTokenMaximum = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
+        uint256 reTokenBalance = restakingToken.balanceOf(address(this));
 
-        if (address(zircuitRestakeProxy) != address(0)) {
-            etherfiWithdrawRestakingPool.withdraw(
-                address(restakingToken),
-                stakingTokenAmount
-            );
+        if(address(zircuitRestakeProxy) != address(0)){
+            uint256 reTokenZircuitBalance = zircuitRestakeProxy.balance(address(restakingToken), address(this));
+            reTokenBalance = reTokenZircuitBalance > reTokenMaximum ? reTokenMaximum: reTokenZircuitBalance;
+            zircuitRestakeProxy.withdraw(address(restakingToken), reTokenBalance);
         }
-
-        if (
-            address(etherFiRestakeProxy) != address(0) &&
-            address(etherfiWithdrawRestakingPool) != address(0)
-        ) {
-            restakingToken.approve(address(swapProxy), stakingTokenAmount);
-            etherfiWithdrawRestakingPool.withdraw(
-                address(restakingToken),
-                stakingTokenAmount
-            );
+        
+        if (address(etherFiRestakeProxy) != address(0) && address(etherfiWithdrawRestakingPool) != address(0)) {
+            restakingToken.approve(address(etherfiWithdrawRestakingPool), reTokenBalance);
+            etherfiWithdrawRestakingPool.withdraw(address(restakingToken), reTokenBalance);
         } else {
-            restakingToken.approve(address(swapProxy), stakingTokenAmount);
-            swapProxy.swapToWithOutput(
+            restakingToken.approve(address(swapProxy), reTokenBalance);
+            if(reTokenMaximum <= reTokenBalance){
+                swapProxy.swapToWithOutput(
+                    address(this),
+                    address(restakingToken),
+                    ethAmount,
+                    address(ethToken),
+                    getFee(address(restakingToken), address(ethToken))
+                );
+                return;
+            }
+
+            swapProxy.swapTo(
                 address(this),
                 address(restakingToken),
-                ethAmount,
+                reTokenBalance,
                 address(ethToken),
                 getFee(address(restakingToken), address(ethToken))
-            );
+            );    
         }
     }
 
