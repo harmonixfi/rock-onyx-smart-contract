@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/IPerpDexProxy.sol";
 import "../../../extensions/RockOnyxAccessControl.sol";
@@ -10,7 +10,7 @@ import "../../../interfaces/IOptionsVendorProxy.sol";
 import "../structs/DeltaNeutralStruct.sol";
 import "hardhat/console.sol";
 
-contract RockOynxPerpDexStrategy is RockOnyxAccessControl, ReentrancyGuard {
+contract RockOynxPerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     address perpDexStrategyUsdc;
@@ -35,15 +35,13 @@ contract RockOynxPerpDexStrategy is RockOnyxAccessControl, ReentrancyGuard {
 
     event RequestFundsPerpDex(uint256 acquireAmount);
 
-    constructor() {
-        perpDexState = PerpDexState(0, 0);
-    }
-
     function perpDex_Initialize(
         address _perpDexAddress,
         address _optionsReceiver,
         address _usdc
     ) internal {
+        accessControl_Initialize();
+        perpDexState = PerpDexState(0, 0);
         perpDexStrategyUsdc = _usdc;
         perpDexVendor = IOptionsVendorProxy(_perpDexAddress);
         optionsReceiver = _optionsReceiver;

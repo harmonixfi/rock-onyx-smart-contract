@@ -15,7 +15,7 @@ contract RockOnyxAccessControl is AccessControl {
 
     bool internal paused;
 
-    constructor() {
+    function accessControl_Initialize() public {
         errors[LIDO_STAKE_ROLE] = "LIDO_STAKE_ROLE_ERROR";
         errors[ROCK_ONYX_ADMIN_ROLE] = "ROCK_ONYX_ADMIN_ROLE_ERROR";
         errors[
@@ -28,11 +28,17 @@ contract RockOnyxAccessControl is AccessControl {
         require(hasRole(_role, msg.sender), errors[_role]);
     }
 
-    function grantRole(bytes32 role, address account) public virtual override onlyRole(ROCK_ONYX_ADMIN_ROLE) {
+    function grantRole(
+        bytes32 role,
+        address account
+    ) public virtual override onlyRole(ROCK_ONYX_ADMIN_ROLE) {
         _grantRole(role, account);
     }
 
-    function revokeRole(bytes32 role, address account) public virtual override onlyRole(ROCK_ONYX_ADMIN_ROLE) {
+    function revokeRole(
+        bytes32 role,
+        address account
+    ) public virtual override onlyRole(ROCK_ONYX_ADMIN_ROLE) {
         _revokeRole(role, account);
     }
 

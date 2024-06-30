@@ -99,7 +99,6 @@ contract UniSwap is BaseSwap {
         );
 
         if(network == BASE_NETWORK){
-            console.log("BASE_NETWORK");
             IUniSwapRouterOnBase.ExactOutputSingleParams memory wdParams = IUniSwapRouterOnBase
                 .ExactOutputSingleParams({
                     tokenIn: tokenIn,

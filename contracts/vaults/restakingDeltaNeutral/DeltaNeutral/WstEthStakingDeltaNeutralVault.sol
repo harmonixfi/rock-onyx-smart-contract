@@ -11,7 +11,7 @@ contract WstEthStakingDeltaNeutralVault is
     PerpDexStrategy,
     BaseDeltaNeutralVault
 {
-    constructor(
+    function initialize(
         address _admin,
         address _usdc,
         uint8 _decimals,
@@ -25,16 +25,14 @@ contract WstEthStakingDeltaNeutralVault is
         address _restakingToken,
         uint256 _initialPPS,
         address _swapProxy,
+        address _restakingTokenHolderAddress,
         address[] memory _token0s,
         address[] memory _token1s,
-        uint24[] memory _fees
-    )
-        WstEthStakingStrategy()
-        PerpDexStrategy()
-        BaseDeltaNeutralVault()
-    {
+        uint24[] memory _fees,
+        uint64 _network
+    ) public {
         baseDeltaNeutralVault_Initialize(_admin, _usdc, _decimals, _minimumSupply, _cap, _networkCost, _initialPPS, _swapProxy, _token0s, _token1s, _fees);
-        ethRestaking_Initialize(_restakingToken, _usdc, _weth, _swapProxy, _token0s, _token1s, _fees);
+        ethRestaking_Initialize(_restakingToken, _usdc, _weth, _swapProxy, _restakingTokenHolderAddress, _token0s, _token1s, _fees, _network);
         perpDex_Initialize(_perpDexAddress, _perpDexReceiver, _usdc, _perpDexConnector);
     }
 
@@ -64,17 +62,34 @@ contract WstEthStakingDeltaNeutralVault is
     /**
      * @notice acquire asset, prepare funds for withdrawal
      */
-    function acquireWithdrawalFunds(uint256 usdAmount) external nonReentrant {
+    function acquireWithdrawalFunds(uint256 amount) external nonReentrant {
         _auth(ROCK_ONYX_ADMIN_ROLE);
 
-        require(usdAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
-        uint256 totalRestakingPerpDexBalance = getTotalRestakingTvl() + getTotalPerpDexTvl();
-        uint256 ethStakeLendRatio =  getTotalRestakingTvl() * 1e4 / totalRestakingPerpDexBalance;
-        uint256 perpDexRatio =  getTotalPerpDexTvl() * 1e4 / totalRestakingPerpDexBalance;
-        uint256 ethStakeLendAmount = usdAmount * ethStakeLendRatio / 1e4;
-        uint256 perpDexAmount = usdAmount * perpDexRatio / 1e4;
-        vaultState.withdrawPoolAmount += acquireFundsFromRestakingStrategy(ethStakeLendAmount);
-        vaultState.withdrawPoolAmount += acquireFundsFromPerpDex(perpDexAmount);
+        require(amount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+        
+        vaultState.withdrawPoolAmount += _acquireFunds(amount);
+    }
+
+    /* 
+     * @notice acquire asset, prepare funds for withdrawal
+     */
+    function acquireManagementFee(uint256 timestamp) external nonReentrant {
+        _auth(ROCK_ONYX_ADMIN_ROLE);
+
+        uint256 feeAmount = _getManagementFee(timestamp);
+        require(feeAmount <= _totalValueLocked(), "INVALID_ACQUIRE_AMOUNT");
+
+        vaultState.totalFeePoolAmount += _acquireFunds(feeAmount);
+        vaultState.lastUpdateManagementFeeDate = block.timestamp;
+    }
+
+    /**
+     * @notice acquire asset, prepare funds for withdrawal
+     */
+    function _acquireFunds(uint256 amount) private returns(uint256) {
+        (uint256 ethStakeRatio, uint256 perpDexRatio) = _allocatedRatio();
+        return acquireFundsFromRestakingStrategy(amount * ethStakeRatio / 1e4) + 
+                                    acquireFundsFromPerpDex(amount * perpDexRatio / 1e4);
     }
 
     /**

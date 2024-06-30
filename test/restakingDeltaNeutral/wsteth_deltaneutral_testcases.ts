@@ -1,8 +1,9 @@
-const { ethers, network } = require("hardhat");
+const { ethers, network, upgrades } = require("hardhat");
 import { expect } from "chai";
 
 import * as Contracts from "../../typechain-types";
 import {
+  AddressZero,
   CHAINID,
   WETH_ADDRESS,
   USDC_ADDRESS,
@@ -15,22 +16,19 @@ import {
   ETH_PRICE_FEED_ADDRESS,
   WSTETH_ETH_PRICE_FEED_ADDRESS,
   USDT_PRICE_FEED_ADDRESS,
-  NETWORK_COST
+  NETWORK_COST,
 } from "../../constants";
 import { BigNumberish, Signer } from "ethers";
 
 const chainId: CHAINID = network.config.chainId;
-console.log("chainId ",chainId);
-let perDexRecipientAddress : string;
-let perDexConnectorAddress : string;
+console.log("chainId ", chainId);
+let perDexRecipientAddress: string;
+let perDexConnectorAddress: string;
 
 const PRECISION = 2 * 1e6;
 
 describe("WstEthStakingDeltaNeutralVault", function () {
-  let admin: Signer,
-    user1: Signer,
-    user2: Signer,
-    user4: Signer;
+  let admin: Signer, user1: Signer, user2: Signer, user4: Signer;
 
   let wstEthStakingDNVault: Contracts.WstEthStakingDeltaNeutralVault;
   let usdc: Contracts.IERC20;
@@ -49,6 +47,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
   const wsteth_ethPriceFeed = WSTETH_ETH_PRICE_FEED_ADDRESS[chainId];
   const usdtPriceFeed = USDT_PRICE_FEED_ADDRESS[chainId];
   const networkCost = BigInt(Number(NETWORK_COST[chainId]) * 1e6);
+  const GAS_LIMIT = 650000;
 
   let priceConsumerContract: Contracts.PriceConsumer;
   let uniSwapContract: Contracts.UniSwap;
@@ -91,23 +90,29 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       "WstEthStakingDeltaNeutralVault"
     );
 
-    wstEthStakingDNVault = await wstEthStakingDeltaneutralVault.deploy(
-      admin,
-      usdcAddress,
-      6,
-      BigInt(5 * 1e6),
-      BigInt(1000000 * 1e6),
-      networkCost,
-      wethAddress,
-      perDexAddress,
-      perDexRecipientAddress,
-      perDexConnectorAddress,
-      wstethAddress,
-      BigInt(1 * 1e6),
-      await uniSwapContract.getAddress(),
-      [wethAddress, wstethAddress,  usdtAddress],
-      [usdcAddress, wethAddress, usdcAddress],
-      [500, 100, 100]
+    wstEthStakingDNVault = await upgrades.deployProxy(
+      wstEthStakingDeltaneutralVault,
+      [
+        await admin.getAddress(),
+        usdcAddress,
+        6,
+        BigInt(5 * 1e6),
+        BigInt(1000000 * 1e6),
+        networkCost,
+        wethAddress,
+        perDexAddress,
+        perDexRecipientAddress,
+        perDexConnectorAddress,
+        wstethAddress,
+        BigInt(1 * 1e6),
+        await uniSwapContract.getAddress(),
+		    AddressZero,
+        [wethAddress, wstethAddress, usdtAddress],
+        [usdcAddress, wethAddress, usdcAddress],
+        [500, 100, 100],
+		chainId
+      ],
+      { initializer: "initialize" }
     );
     await wstEthStakingDNVault.waitForDeployment();
 
@@ -132,15 +137,27 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     console.log("deployWstEthStakingDeltaNeutralVault");
   });
 
-  async function deposit(sender: Signer, amount: BigNumberish, token: Contracts.IERC20, tokenTransit: Contracts.IERC20) {
+  async function deposit(
+    sender: Signer,
+    amount: BigNumberish,
+    token: Contracts.IERC20,
+    tokenTransit: Contracts.IERC20
+  ) {
     await token
       .connect(sender)
       .approve(await wstEthStakingDNVault.getAddress(), amount);
 
-    await wstEthStakingDNVault.connect(sender).deposit(amount, token, tokenTransit);
+    await wstEthStakingDNVault
+      .connect(sender)
+      .deposit(amount, token, tokenTransit);
   }
 
-  async function transferForUser(token: Contracts.IERC20, from: Signer, to: Signer, amount: BigNumberish) {
+  async function transferForUser(
+    token: Contracts.IERC20,
+    from: Signer,
+    to: Signer,
+    amount: BigNumberish
+  ) {
     const transferTx = await token.connect(from).transfer(to, amount);
     await transferTx.wait();
   }
@@ -168,21 +185,46 @@ describe("WstEthStakingDeltaNeutralVault", function () {
   }
 
   async function getEthPrice() {
-    const _ethPrice = await uniSwapContract.getPriceOf(wethAddress, usdcAddress);
+    const _ethPrice = await uniSwapContract.getPriceOf(
+      wethAddress,
+      usdcAddress
+    );
     return parseFloat(_ethPrice.toString()) / 1e6;
   }
 
   it("seed data", async function () {
-    const usdcSigner = await ethers.getImpersonatedSigner(usdcImpersonatedSigner);
-    const usdtSigner = await ethers.getImpersonatedSigner(usdtImpersonatedSigner);
+    const usdcSigner = await ethers.getImpersonatedSigner(
+      usdcImpersonatedSigner
+    );
+    const usdtSigner = await ethers.getImpersonatedSigner(
+      usdtImpersonatedSigner
+    );
 
-    await transferForUser(usdc, usdcSigner, user1, 1000 * 1e6);
+    await transferForUser(usdc, usdcSigner, user1, 10000 * 1e6);
     await transferForUser(usdc, usdcSigner, admin, 1000 * 1e6);
     await transferForUser(usdc, usdcSigner, user2, 1000 * 1e6);
     await transferForUser(usdt, usdtSigner, user2, 1000 * 1e6);
   });
 
-  it.skip("user deposit -> withdraw", async function () {
+  it("user deposit -> withdraw", async function () {
+    console.log(
+      "-------------deposit to restakingDeltaNeutralVault---------------"
+    );
+    await deposit(user1, 10 * 1e6, usdc, usdc);
+    await wstEthStakingDNVault.connect(admin).depositRaw();
+    await deposit(user1, 50 * 1e6, usdc, usdc);
+    await deposit(user1, 1350 * 1e6, usdc, usdc);
+    await deposit(user1, 10 * 1e6, usdc, usdc);
+    await deposit(user1, 10 * 1e6, usdc, usdc);
+    await wstEthStakingDNVault.connect(admin).depositRaw();
+    console.log("-------------open position---------------");
+    let openPositionTx1 = await wstEthStakingDNVault
+      .connect(admin)
+      .openPosition(BigInt(0.01 * 1e18));
+    await openPositionTx1.wait();
+  });
+
+  it("user deposit -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -215,10 +257,13 @@ describe("WstEthStakingDeltaNeutralVault", function () {
 
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
-    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost,PRECISION);
+    expect(user1BalanceAfterWithdraw).to.approximately(
+      user2Balance + BigInt(100 * 1e6) - networkCost,
+      PRECISION
+    );
   });
 
-  it.skip("user deposit -> deposit to perp dex -> deposit to kelp -> deposit to zircuit", async function () {
+  it("user deposit -> deposit to perp dex -> open possition", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -229,7 +274,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
 
     console.log("-------------open position---------------");
@@ -239,7 +284,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     await openPositionTx.wait();
   });
 
-  it.skip("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
+  it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -250,7 +295,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------open position---------------");
@@ -262,7 +307,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     console.log("-------------sync restaking balance---------------");
     const syncBalanceTx = await wstEthStakingDNVault
       .connect(admin)
-      .syncBalance(150*1e6);
+      .syncBalance(150 * 1e6);
     await syncBalanceTx.wait();
 
     console.log("-------------close position---------------");
@@ -277,16 +322,18 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       .initiateWithdrawal(100 * 1e6);
     await initiateWithdrawalTx1.wait();
 
-    await usdc.connect(admin).approve(await wstEthStakingDNVault.getAddress(), 50 * 1e6);
+    await usdc
+      .connect(admin)
+      .approve(await wstEthStakingDNVault.getAddress(), 50 * 1e6);
     const handlePostWithdrawTx = await wstEthStakingDNVault
       .connect(admin)
-      .handlePostWithdrawFromVendor(50*1e6);
+      .handlePostWithdrawFromVendor(50 * 1e6);
     await handlePostWithdrawTx.wait();
-    
+
     console.log("-------------handleWithdrawalFunds---------------");
     const handleWithdrawalFundsTx = await wstEthStakingDNVault
       .connect(admin)
-      .acquireWithdrawalFunds(100*1e6);
+      .acquireWithdrawalFunds(100 * 1e6);
     await initiateWithdrawalTx1.wait();
 
     console.log("-------------complete withdrawals---------------");
@@ -306,8 +353,9 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     );
   });
 
-  it.skip("user deposit -> deposit to perp dex -> withdraw", async function () {
-    console.log("-------------deposit to restakingDeltaNeutralVault---------------"
+  it("user deposit -> deposit to perp dex -> withdraw", async function () {
+    console.log(
+      "-------------deposit to restakingDeltaNeutralVault---------------"
     );
     await deposit(user1, 100 * 1e6, usdc, usdc);
     await deposit(user2, 200 * 1e6, usdc, usdc);
@@ -316,7 +364,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
     expect(totalValueLock).to.approximately(300 * 1e6, PRECISION);
 
     console.log("-------------Users initial withdrawals---------------");
@@ -325,16 +373,18 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       .initiateWithdrawal(100 * 1e6);
     await initiateWithdrawalTx1.wait();
 
-    await usdc.connect(admin).approve(await wstEthStakingDNVault.getAddress(), 50 * 1e6);
+    await usdc
+      .connect(admin)
+      .approve(await wstEthStakingDNVault.getAddress(), 50 * 1e6);
     const handlePostWithdrawTx = await wstEthStakingDNVault
       .connect(admin)
-      .handlePostWithdrawFromVendor(50*1e6);
+      .handlePostWithdrawFromVendor(50 * 1e6);
     await handlePostWithdrawTx.wait();
 
     console.log("-------------handleWithdrawalFunds---------------");
     const handleWithdrawalFundsTx = await wstEthStakingDNVault
       .connect(admin)
-      .acquireWithdrawalFunds(100*1e6);
+      .acquireWithdrawalFunds(100 * 1e6);
     await initiateWithdrawalTx1.wait();
 
     console.log("-------------complete withdrawals---------------");
@@ -348,13 +398,18 @@ describe("WstEthStakingDeltaNeutralVault", function () {
 
     let user1BalanceAfterWithdraw = await usdc.connect(user2).balanceOf(user2);
     console.log("usdc of user after withdraw %s", user1BalanceAfterWithdraw);
-    expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost, PRECISION);
+    expect(user1BalanceAfterWithdraw).to.approximately(
+      user2Balance + BigInt(100 * 1e6) - networkCost,
+      PRECISION
+    );
     totalValueLock = await logAndReturnTotalValueLock();
     expect(totalValueLock).to.approximately(200 * 1e6, PRECISION);
   });
 
   it("user deposit -> deposit to vendor -> open position -> sync profit -> withdraw -> close position -> complete withdraw", async function () {
-    console.log("-------------deposit to rockOnyxDeltaNeutralVault---------------");
+    console.log(
+      "-------------deposit to rockOnyxDeltaNeutralVault---------------"
+    );
 
     const inititalDeposit = 10 + 100;
     const user2_initDeposit = 100;
@@ -369,7 +424,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(inititalDeposit * 1e6, PRECISION);
 
     console.log("-------------deposit to vendor on aevo---------------");
-    await wstEthStakingDNVault.connect(admin).depositToVendor();
+    await wstEthStakingDNVault.connect(admin).depositRaw();
 
     console.log("-------------open position---------------");
     let ethPrice = await getEthPrice();
@@ -500,10 +555,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     );
     await usdc
       .connect(admin)
-      .approve(
-        await wstEthStakingDNVault.getAddress(),
-        amountToSend
-      );
+      .approve(await wstEthStakingDNVault.getAddress(), amountToSend);
 
     // optionsReceiver call handlePostWithdrawFromVendor to return withdrawalAmountInPerp to vault
     const handlePostWithdrawTx = await wstEthStakingDNVault
@@ -518,8 +570,7 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     await handleWithdrawalFundsTx.wait();
 
     // get getPerpDexUnAllocatedBalance from contract
-    const perpDexState =
-      await wstEthStakingDNVault.getPerpDexState();
+    const perpDexState = await wstEthStakingDNVault.getPerpDexState();
     console.log("perpDexUnAllocatedBalance: ", perpDexState);
 
     const perpDexBalance = perpDexState[0];
@@ -530,12 +581,10 @@ describe("WstEthStakingDeltaNeutralVault", function () {
     console.log("pricePerShare2 %s", pricePerShare2);
     const pricePerShare2Int = Number(pricePerShare2) / 1e6;
     console.log("pricePerShare2Int %s", pricePerShare2Int);
-    
-    const expectedPerpDexBalance =
-      10 * pricePerShare2Int * perpRatio;
+
+    const expectedPerpDexBalance = 10 * pricePerShare2Int * perpRatio;
     console.log("expectedPerpDexBalance %s", expectedPerpDexBalance);
     console.log("perpRatio %s", perpRatio);
-    
 
     expect(perpDexBalance).to.approximately(
       BigInt(parseInt((expectedPerpDexBalance * 1e6).toString())),
@@ -564,5 +613,318 @@ describe("WstEthStakingDeltaNeutralVault", function () {
       BigInt(parseInt((expectedUser2Balance * 1e6).toString())),
       PRECISION
     );
+  });
+
+  it("migrate and open position on chain -> ", async function () {
+    console.log("-------------open position on chain---------------");
+    const contractAdmin = await ethers.getImpersonatedSigner(
+      "0x39c76363E9514a7D11976d963B09b7588B5DFBf3"
+    );
+    const contractAddress = "0x09f2b45a6677858f016EBEF1E8F141D6944429DF";
+    const exportABI = [
+      {
+        inputs: [],
+        name: "exportVaultState",
+        outputs: [
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                components: [
+                  {
+                    internalType: "uint256",
+                    name: "shares",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "depositAmount",
+                    type: "uint256",
+                  },
+                ],
+                internalType: "struct DepositReceipt",
+                name: "depositReceipt",
+                type: "tuple",
+              },
+            ],
+            internalType: "struct DepositReceiptArr[]",
+            name: "",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                components: [
+                  {
+                    internalType: "uint256",
+                    name: "shares",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "pps",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "profit",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "performanceFee",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "withdrawAmount",
+                    type: "uint256",
+                  },
+                ],
+                internalType: "struct Withdrawal",
+                name: "withdrawal",
+                type: "tuple",
+              },
+            ],
+            internalType: "struct WithdrawalArr[]",
+            name: "",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "uint8",
+                name: "decimals",
+                type: "uint8",
+              },
+              {
+                internalType: "address",
+                name: "asset",
+                type: "address",
+              },
+              {
+                internalType: "uint256",
+                name: "minimumSupply",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "cap",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "performanceFeeRate",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "managementFeeRate",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct VaultParams",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "withdrawPoolAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "pendingDepositAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "totalShares",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "totalFeePoolAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "lastUpdateManagementFeeDate",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct VaultState",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "unAllocatedBalance",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "totalBalance",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct EthRestakingState",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "unAllocatedBalance",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "perpDexBalance",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct PerpDexState",
+            name: "",
+            type: "tuple",
+          },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ];
+    const contract = new ethers.Contract(
+      contractAddress,
+      exportABI,
+      contractAdmin
+    );
+
+    console.log("-------------export old vault state---------------");
+    let exportVaultStateTx = await contract
+      .connect(contractAdmin)
+      .exportVaultState();
+
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
+
+    console.log("-------------import vault state---------------");
+    const _depositReceiptArr = exportVaultStateTx[0].map((element: any[][]) => {
+      return {
+        owner: element[0],
+        depositReceipt: {
+          shares: element[1][0],
+          depositAmount: element[1][1],
+        },
+      };
+    });
+    const _withdrawalArr = exportVaultStateTx[1].map((element: any[][]) => {
+      return {
+        owner: element[0],
+        withdrawal: {
+          shares: element[1][0],
+          pps: element[1][1],
+          profit: element[1][2],
+          performanceFee: element[1][3],
+          withdrawAmount: element[1][4],
+        },
+      };
+    });
+    const _vaultParams = {
+      decimals: exportVaultStateTx[2][0],
+      asset: exportVaultStateTx[2][1],
+      minimumSupply: exportVaultStateTx[2][2],
+      cap: exportVaultStateTx[2][3],
+      performanceFeeRate: exportVaultStateTx[2][4],
+      managementFeeRate: exportVaultStateTx[2][5],
+    };
+    const _vaultState = {
+      withdrawPoolAmount: exportVaultStateTx[3][2],
+      pendingDepositAmount: exportVaultStateTx[3][3],
+      totalShares: exportVaultStateTx[3][4],
+      totalFeePoolAmount: exportVaultStateTx[3][0] + exportVaultStateTx[3][1],
+      lastUpdateManagementFeeDate: (await ethers.provider.getBlock("latest"))
+        .timestamp,
+    };
+    const _ethStakeLendState = {
+      unAllocatedBalance: exportVaultStateTx[4][0],
+      totalBalance: exportVaultStateTx[4][1],
+    };
+    const _perpDexState = {
+      unAllocatedBalance: exportVaultStateTx[5][0],
+      perpDexBalance: exportVaultStateTx[5][1],
+    };
+
+    const newContractFactory = await ethers.getContractFactory(
+      "WstEthStakingDeltaNeutralVault"
+    );
+
+    const newContract = await upgrades.deployProxy(
+      newContractFactory,
+      [
+        await admin.getAddress(),
+        usdcAddress,
+        6,
+        BigInt(5 * 1e6),
+        BigInt(1000000 * 1e6),
+        networkCost,
+        wethAddress,
+        perDexAddress,
+        perDexRecipientAddress,
+        perDexConnectorAddress,
+        wstethAddress,
+        BigInt(1 * 1e6),
+        await uniSwapContract.getAddress(),
+		AddressZero,
+        [wethAddress, wstethAddress, usdtAddress],
+        [usdcAddress, wethAddress, usdcAddress],
+        [500, 100, 100],
+		chainId
+      ],
+      { initializer: "initialize" }
+    );
+    await newContract.waitForDeployment();
+
+    console.log(
+      "deploy wstEthStakingDNVault successfully: %s",
+      await newContract.getAddress()
+    );
+
+    const importVaultStateTx = await newContract
+      .connect(admin)
+      .importVaultState(
+        _depositReceiptArr,
+        _withdrawalArr,
+        _vaultParams,
+        _vaultState,
+        _ethStakeLendState,
+        _perpDexState
+      );
+    console.log("-------------export new vault state---------------");
+    exportVaultStateTx = await newContract.connect(admin).exportVaultState();
+
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthRestakingState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
   });
 });
