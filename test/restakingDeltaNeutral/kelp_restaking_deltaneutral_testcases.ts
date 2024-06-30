@@ -66,7 +66,6 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
 
   let priceConsumerContract: Contracts.PriceConsumer;
   let uniSwapContract: Contracts.UniSwap;
-  let restakingTokenHolder: Contracts.BaseRestakingTokenHolder;
 
   async function deployPriceConsumerContract() {
     const factory = await ethers.getContractFactory("PriceConsumer");
@@ -101,21 +100,6 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     );
   }
 
-  async function deployRestakingTokenHolderContract() {
-    const factory = await ethers.getContractFactory("BaseRestakingTokenHolder");
-    restakingTokenHolder = await factory.deploy(
-      admin,
-      rsEthAddress,
-      zircuitDepositAddress
-    );
-    await restakingTokenHolder.waitForDeployment();
-
-    console.log(
-      "Deployed restaking token holder contract at address %s",
-      await restakingTokenHolder.getAddress()
-    );
-  }
-
   async function deployKelpRestakingDeltaNeutralVault() {
     const kelpRestakingDeltaNeutralVault = await ethers.getContractFactory(
       "KelpRestakingDeltaNeutralVault"
@@ -136,7 +120,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
         aevoConnectorAddress,
         rsEthAddress,
         BigInt(1 * 1e6),
-        [kelpDepositAddress, await restakingTokenHolder.getAddress()],
+        [kelpDepositAddress, zircuitDepositAddress],
         kelpDepositRefId,
         await uniSwapContract.getAddress(),
         [usdcAddress, rsEthAddress, usdtAddress, daiAddress],
@@ -164,7 +148,6 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
 
     await deployPriceConsumerContract();
     await deployUniSwapContract();
-    await deployRestakingTokenHolderContract();
     await deployKelpRestakingDeltaNeutralVault();
     console.log("deployKelpRestakingDeltaNeutralVault");
   });
@@ -208,7 +191,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     await transferForUser(dai, daiSigner, user2, BigInt(100000 * 1e18));
   });
 
-  it.skip("user deposit -> withdraw", async function () {
+  it("user deposit -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -245,7 +228,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost,PRECISION);
   });
 
-  it.skip("user deposit -> deposit to perp dex -> open possition -> deposit to zircuit", async function () {
+  it("user deposit -> deposit to perp dex -> open possition -> deposit to zircuit", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -347,7 +330,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     );
   });
 
-  it.skip("user deposit -> deposit to perp dex -> withdraw", async function () {
+  it("user deposit -> deposit to perp dex -> withdraw", async function () {
     console.log("-------------deposit to restakingDeltaNeutralVault---------------"
     );
     await deposit(user1, 100 * 1e6, usdc, usdc);
@@ -624,7 +607,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
         aevoConnectorAddress,
         rsEthAddress,
         BigInt(1 * 1e6),
-        [kelpDepositAddress, await restakingTokenHolder.getAddress()],
+        [kelpDepositAddress, zircuitDepositAddress],
         kelpDepositRefId,
         await uniSwapContract.getAddress(),
         [usdcAddress, rsEthAddress, usdtAddress, daiAddress],

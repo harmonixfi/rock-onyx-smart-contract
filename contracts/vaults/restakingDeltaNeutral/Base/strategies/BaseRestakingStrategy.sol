@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "../../../../interfaces/IRestakingTokenHolder.sol";
 import "../../../../extensions/RockOnyxAccessControl.sol";
 import "../../../../extensions/Uniswap/Uniswap.sol";
 import "./../../Base/BaseSwapVault.sol";
@@ -17,7 +16,6 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
     IERC20 internal usdcToken;
     IERC20 internal ethToken;
     IERC20 internal restakingToken;
-    IRestakingTokenHolder internal restakingTokenHolder;
     EthRestakingState internal restakingState;
     uint64 internal network;
 
@@ -33,7 +31,6 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
         address _usdcAddress,
         address _ethAddress,
         address _swapAddress,
-        address _restakingTokenHolderAddress,
         address[] memory _token0s,
         address[] memory _token1s,
         uint24[] memory _fees,
@@ -43,7 +40,6 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
         ethToken = IERC20(_ethAddress);
         restakingToken = IERC20(_restakingToken);
         network = _network;
-        restakingTokenHolder = IRestakingTokenHolder(_restakingTokenHolderAddress);
         baseSwapVault_Initialize(_swapAddress, _token0s, _token1s, _fees);
     }
 

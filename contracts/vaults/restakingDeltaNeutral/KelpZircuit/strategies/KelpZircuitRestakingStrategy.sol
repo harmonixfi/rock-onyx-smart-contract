@@ -11,6 +11,7 @@ import "./../../Base/BaseSwapVault.sol";
 contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
     IWithdrawRestakingPool private kelpWithdrawRestakingPool;
     IKelpRestakeProxy private kelpRestakeProxy;
+    IZircuitRestakeProxy private zircuitRestakeProxy;
     IERC20 private stakingToken;
     string private refId;
 
@@ -26,14 +27,20 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
         uint24[] memory _fees,
         uint64 _network
     ) internal {
-        super.ethRestaking_Initialize(_restakingToken, _usdcAddress, _ethAddress, _swapAddress, _restakingProxies[1], _token0s, _token1s, _fees, _network);
+        super.ethRestaking_Initialize(_restakingToken, _usdcAddress, _ethAddress, _swapAddress, _token0s, _token1s, _fees, _network);
 
         refId = _refId;
         kelpRestakeProxy = IKelpRestakeProxy(_restakingProxies[0]);
+        zircuitRestakeProxy = IZircuitRestakeProxy(_restakingProxies[1]);
+
     }
 
     function syncRestakingBalance() internal override{
-        uint256 restakingTokenAmount = restakingToken.balanceOf(address(this)) + restakingTokenHolder.balanceOf(address(this));
+        uint256 restakingTokenAmount = restakingToken.balanceOf(address(this));
+        if(address(zircuitRestakeProxy) != address(0)){
+            restakingTokenAmount += zircuitRestakeProxy.balance(address(restakingToken), address(this));
+        }
+
         uint256 ethAmount = restakingTokenAmount * swapProxy.getPriceOf(address(restakingToken), address(ethToken)) / 1e18;
         restakingState.totalBalance = restakingState.unAllocatedBalance + ethAmount * swapProxy.getPriceOf(address(ethToken), address(usdcToken)) / 1e18;
     }
@@ -57,37 +64,45 @@ contract KelpZircuitRestakingStrategy is BaseRestakingStrategy {
             );
         }
         
-        restakingToken.approve(address(restakingTokenHolder), restakingToken.balanceOf(address(this)));
-        restakingTokenHolder.deposit(restakingToken.balanceOf(address(this)));
+        if(address(zircuitRestakeProxy) != address(0)){
+            restakingToken.approve(address(zircuitRestakeProxy), restakingToken.balanceOf(address(this)));
+            zircuitRestakeProxy.depositFor(address(restakingToken), address(this), restakingToken.balanceOf(address(this)));
+        }
     }
 
     function withdrawFromRestakingProxy(uint256 ethAmount) internal override {
-        uint256 stakingTokenAmount = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
-        uint256 withdrawnAmount = restakingTokenHolder.withdraw(stakingTokenAmount);
+        uint256 reTokenMaximum = swapProxy.getAmountInMaximum(address(restakingToken), address(ethToken), ethAmount);
+        uint256 reTokenBalance = restakingToken.balanceOf(address(this));
 
+        if(address(zircuitRestakeProxy) != address(0)){
+            uint256 reTokenZircuitBalance = zircuitRestakeProxy.balance(address(restakingToken), address(this));
+            reTokenBalance = reTokenZircuitBalance > reTokenMaximum ? reTokenMaximum: reTokenZircuitBalance;
+            zircuitRestakeProxy.withdraw(address(restakingToken), reTokenBalance);
+        }
+        
         if(address(kelpRestakeProxy) != address(0) && address(kelpWithdrawRestakingPool) != address(0)) {
-            kelpWithdrawRestakingPool.withdraw(address(restakingToken), withdrawnAmount);
+            restakingToken.approve(address(kelpWithdrawRestakingPool), reTokenBalance);
+            kelpWithdrawRestakingPool.withdraw(address(restakingToken), reTokenBalance);
         }else{
-            if(stakingTokenAmount == withdrawnAmount){
-                restakingToken.approve(address(swapProxy), stakingTokenAmount);
-                    swapProxy.swapToWithOutput(
-                        address(this),
-                        address(restakingToken),
-                        ethAmount,
-                        address(ethToken),
-                        getFee(address(restakingToken), address(ethToken))
-                    ); 
+            restakingToken.approve(address(swapProxy), reTokenBalance);
+            if(reTokenMaximum <= reTokenBalance){
+                swapProxy.swapToWithOutput(
+                    address(this),
+                    address(restakingToken),
+                    ethAmount,
+                    address(ethToken),
+                    getFee(address(restakingToken), address(ethToken))
+                ); 
                 return;
             }
 
-            restakingToken.approve(address(swapProxy), stakingTokenAmount);
-                swapProxy.swapTo(
-                    address(this),
-                    address(restakingToken),
-                    stakingTokenAmount,
-                    address(ethToken),
-                    getFee(address(restakingToken), address(ethToken))
-                );    
+            swapProxy.swapTo(
+                address(this),
+                address(restakingToken),
+                reTokenBalance,
+                address(ethToken),
+                getFee(address(restakingToken), address(ethToken))
+            );    
         }
     }
 

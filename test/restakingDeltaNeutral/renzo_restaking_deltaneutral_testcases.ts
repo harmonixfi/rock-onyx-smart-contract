@@ -61,7 +61,6 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
 
   let priceConsumerContract: Contracts.PriceConsumer;
   let uniSwapContract: Contracts.UniSwap;
-  let restakingTokenHolder: Contracts.BaseRestakingTokenHolder;
 
   async function deployPriceConsumerContract() {
     const factory = await ethers.getContractFactory("PriceConsumer");
@@ -96,21 +95,6 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     );
   }
 
-  async function deployRestakingTokenHolderContract() {
-    const factory = await ethers.getContractFactory("BaseRestakingTokenHolder");
-    restakingTokenHolder = await factory.deploy(
-      admin,
-      ezEthAddress,
-      zircuitDepositAddress
-    );
-    await restakingTokenHolder.waitForDeployment();
-
-    console.log(
-      "Deployed restaking token holder contract at address %s",
-      await restakingTokenHolder.getAddress()
-    );
-  }
-
   async function deployRenzoRestakingDeltaNeutralVault() {
     const renzoRestakingDeltaNeutralVault = await ethers.getContractFactory(
       "RenzoRestakingDeltaNeutralVault"
@@ -131,7 +115,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
         aevoConnectorAddress,
         ezEthAddress,
         BigInt(1 * 1e6),
-        [renzoDepositAddress, await restakingTokenHolder.getAddress()],
+        [renzoDepositAddress, zircuitDepositAddress],
         await uniSwapContract.getAddress(),
         [usdcAddress, ezEthAddress, usdtAddress, daiAddress],
         [wethAddress, wethAddress, usdcAddress, usdtAddress],
@@ -158,7 +142,6 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
 
     await deployPriceConsumerContract();
     await deployUniSwapContract();
-    await deployRestakingTokenHolderContract();
     await deployRenzoRestakingDeltaNeutralVault();
     console.log("deployRenzoRestakingDeltaNeutralVault");
   });
@@ -216,7 +199,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     await transferForUser(dai, daiSigner, user2, BigInt(100000 * 1e18));
   });
 
-  it.skip("test rock onyx access contral", async function () {
+  it("test rock onyx access contral", async function () {
     const ROCK_ONYX_ADMIN_ROLE =
       "0xdf7ae06225b060fdb3477e253632ba0fef61b138e661391f47b795efaa9c6388";
     const grantRoleTx = await renzoRestakingDNVault
@@ -261,7 +244,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     }
   });
 
-  it.skip("user deposit -> withdraw", async function () {
+  it("user deposit -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -301,7 +284,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     );
   });
 
-  it.skip("user deposit -> deposit to perp dex -> deposit to renzo -> deposit to zircuit", async function () {
+  it("user deposit -> deposit to perp dex -> deposit to renzo -> deposit to zircuit", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -330,7 +313,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
     await openPositionTx.wait();
   });
 
-  it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw -> emergency wd from restaking holder", async function () {
+  it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -404,21 +387,9 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
       user2Balance + BigInt(100 * 1e6) - networkCost,
       PRECISION
     );
-
-    const restakingHolderBalance = await restakingTokenHolder
-      .connect(admin)
-      .balanceOf(await renzoRestakingDNVault.getAddress());
-    console.log("restakingHolderBalance %s", restakingHolderBalance);
-
-    console.log("admin before withdraw %s", await ezEth.balanceOf(admin));
-    const emergencyWDFromHolderTx = await restakingTokenHolder
-      .connect(admin)
-      .emergencyShutdown(admin, BigInt(restakingHolderBalance));
-    await emergencyWDFromHolderTx.wait();
-    console.log("admin after withdraw %s", await ezEth.balanceOf(admin));
   });
 
-  it.skip("user deposit -> deposit to perp dex -> withdraw", async function () {
+  it("user deposit -> deposit to perp dex -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -714,7 +685,7 @@ describe("RenzoRestakingDeltaNeutralVault", function () {
         aevoConnectorAddress,
         ezEthAddress,
         BigInt(1 * 1e6),
-        [renzoDepositAddress, await restakingTokenHolder.getAddress()],
+        [renzoDepositAddress, zircuitDepositAddress],
         await uniSwapContract.getAddress(),
         [usdcAddress, ezEthAddress, usdtAddress, daiAddress],
         [wethAddress, wethAddress, usdcAddress, usdtAddress],
