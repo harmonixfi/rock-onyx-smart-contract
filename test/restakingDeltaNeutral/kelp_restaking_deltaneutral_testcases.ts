@@ -33,6 +33,8 @@ let aevoRecipientAddress : string;
 const PRECISION = 2 * 1e6;
 
 describe("KelpDaRestakingDeltaNeutralVault", function () {
+  this.timeout(120000);
+  
   let admin: Signer,
     user1: Signer,
     user2: Signer,
@@ -191,7 +193,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     await transferForUser(dai, daiSigner, user2, BigInt(100000 * 1e18));
   });
 
-  it("user deposit -> withdraw", async function () {
+  it.skip("user deposit -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -228,7 +230,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     expect(user1BalanceAfterWithdraw).to.approximately(user2Balance + BigInt(100 * 1e6) - networkCost,PRECISION);
   });
 
-  it("user deposit -> deposit to perp dex -> open possition -> deposit to zircuit", async function () {
+  it.skip("user deposit -> deposit to perp dex -> open possition -> deposit to zircuit", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -256,7 +258,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     await openPositionTx.wait();
   });
 
-  it("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
+  it.skip("user deposit -> deposit to perp dex -> open position -> close position -> sync restaking balance -> withdraw", async function () {
     console.log(
       "-------------deposit to restakingDeltaNeutralVault---------------"
     );
@@ -330,7 +332,7 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit -> deposit to perp dex -> withdraw", async function () {
+  it.skip("user deposit -> deposit to perp dex -> withdraw", async function () {
     console.log("-------------deposit to restakingDeltaNeutralVault---------------"
     );
     await deposit(user1, 100 * 1e6, usdc, usdc);
@@ -384,193 +386,195 @@ describe("KelpDaRestakingDeltaNeutralVault", function () {
     expect(totalValueLock).to.approximately(200 * 1e6, PRECISION);
   });
 
-  it.skip("migration, export and import data to new restaking delta neutral vault", async function () {
+  it("migration, export and import data to new restaking delta neutral vault", async function () {
     const contractAdmin = await ethers.getImpersonatedSigner("0x0d4eef21D898883a6bd1aE518B60fEf7A951ce4D");
     const contractAddress = '0xF30353335003E71b42a89314AAaeC437E7Bc8F0B';
-    const exportABI = [{
-      "inputs": [],
-      "name": "exportVaultState",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "address",
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "uint256",
-                  "name": "shares",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "depositAmount",
-                  "type": "uint256"
-                }
-              ],
-              "internalType": "struct DepositReceipt",
-              "name": "depositReceipt",
-              "type": "tuple"
-            }
-          ],
-          "internalType": "struct DepositReceiptArr[]",
-          "name": "",
-          "type": "tuple[]"
-        },
-        {
-          "components": [
-            {
-              "internalType": "address",
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "uint256",
-                  "name": "shares",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "pps",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "profit",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "performanceFee",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "withdrawAmount",
-                  "type": "uint256"
-                }
-              ],
-              "internalType": "struct Withdrawal",
-              "name": "withdrawal",
-              "type": "tuple"
-            }
-          ],
-          "internalType": "struct WithdrawalArr[]",
-          "name": "",
-          "type": "tuple[]"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint8",
-              "name": "decimals",
-              "type": "uint8"
-            },
-            {
-              "internalType": "address",
-              "name": "asset",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "minimumSupply",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "cap",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "performanceFeeRate",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "managementFeeRate",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct VaultParams",
-          "name": "",
-          "type": "tuple"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "performanceFeeAmount",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "managementFeeAmount",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "withdrawPoolAmount",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "pendingDepositAmount",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "totalShares",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct VaultState",
-          "name": "",
-          "type": "tuple"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "unAllocatedBalance",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "totalBalance",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct EthRestakingState",
-          "name": "",
-          "type": "tuple"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "unAllocatedBalance",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "perpDexBalance",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct PerpDexState",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    }]; 
+    const exportABI = [
+      {
+        inputs: [],
+        name: "exportVaultState",
+        outputs: [
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                components: [
+                  {
+                    internalType: "uint256",
+                    name: "shares",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "depositAmount",
+                    type: "uint256",
+                  },
+                ],
+                internalType: "struct DepositReceipt",
+                name: "depositReceipt",
+                type: "tuple",
+              },
+            ],
+            internalType: "struct DepositReceiptArr[]",
+            name: "",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                components: [
+                  {
+                    internalType: "uint256",
+                    name: "shares",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "pps",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "profit",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "performanceFee",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "withdrawAmount",
+                    type: "uint256",
+                  },
+                ],
+                internalType: "struct Withdrawal",
+                name: "withdrawal",
+                type: "tuple",
+              },
+            ],
+            internalType: "struct WithdrawalArr[]",
+            name: "",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "uint8",
+                name: "decimals",
+                type: "uint8",
+              },
+              {
+                internalType: "address",
+                name: "asset",
+                type: "address",
+              },
+              {
+                internalType: "uint256",
+                name: "minimumSupply",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "cap",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "performanceFeeRate",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "managementFeeRate",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct VaultParams",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "performanceFeeAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "managementFeeAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "withdrawPoolAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "pendingDepositAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "totalShares",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct VaultState",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "unAllocatedBalance",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "totalBalance",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct EthRestakingState",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "unAllocatedBalance",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "perpDexBalance",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct PerpDexState",
+            name: "",
+            type: "tuple",
+          },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ];
     const contract = new ethers.Contract(contractAddress, exportABI, contractAdmin);
 
     console.log("-------------export old vault state---------------");

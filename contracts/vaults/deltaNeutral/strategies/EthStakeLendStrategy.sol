@@ -16,7 +16,7 @@ import "../../../interfaces/IERC721Receiver.sol";
 import "../structs/DeltaNeutralStruct.sol";
 import "hardhat/console.sol";
 
-contract RockOynxEthStakeLendStrategy is
+contract EthStakeLendStrategy is
     RockOnyxAccessControl,
     ReentrancyGuardUpgradeable
 {

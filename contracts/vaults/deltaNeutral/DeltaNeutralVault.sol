@@ -6,16 +6,17 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import "../../extensions/RockOnyxAccessControl.sol";
 import "../../extensions/RockOnyx/BaseSwapVault.sol";
 import "../../lib/ShareMath.sol";
-import "./strategies/RockOynxEthStakeLendStrategy.sol";
-import "./strategies/RockOynxPerpDexStrategy.sol";
+import "./strategies/EthStakeLendStrategy.sol";
+import "./strategies/PerpDexStrategy.sol";
 import "./structs/DeltaNeutralStruct.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract RockOnyxDeltaNeutralVault is
-    RockOnyxAccessControl,
+contract DeltaNeutralVault is
+    Initializable,
     BaseSwapVault,
-    RockOynxEthStakeLendStrategy,
-    RockOynxPerpDexStrategy
+    EthStakeLendStrategy,
+    PerpDexStrategy
 {
     uint256 private initialPPS;
     using ShareMath for uint256;
@@ -67,7 +68,7 @@ contract RockOnyxDeltaNeutralVault is
         address[] memory _token0s,
         address[] memory _token1s,
         uint24[] memory _fees
-    ) public {
+    ) public initializer {
         vaultParams = VaultParams(_decimals, _usdc, _minimumSupply, _cap, 10, 1);
         vaultState = VaultState(0, 0, 0, 0, 0);
         networkCost = _networkCost;

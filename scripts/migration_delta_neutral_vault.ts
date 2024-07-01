@@ -17,10 +17,10 @@ async function main() {
     const oldAdmin = new ethers.Wallet(oldPrivateKey, ethers.provider);
 
     console.log("admin address %s", await admin.getAddress());
-    const vaultAddress = "0x7E38b79D0645BE0D9539aec3501f6a8Fb6215392";
+    const vaultAddress = "0xC9A079d7d1CF510a6dBa8dA8494745beaE7736E2";
     const oldContract = await ethers.getContractAt("RockOnyxDeltaNeutralVault", vaultAddress);
     
-    const newVaultAddress = "";
+    const newVaultAddress = "0xd531d9212cB1f9d27F9239345186A6e9712D8876";
     const newContract = await ethers.getContractAt("RockOnyxDeltaNeutralVault", newVaultAddress);
 
     console.log("-------------export old vault state---------------");

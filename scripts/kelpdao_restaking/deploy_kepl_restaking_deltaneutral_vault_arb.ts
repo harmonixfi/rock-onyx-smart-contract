@@ -14,8 +14,8 @@ import {
   KELP_DEPOSIT_ADDRESS,
   KELP_DEPOSIT_REF_ID,
   UNI_SWAP_ADDRESS,
-} from "../constants";
-import * as Contracts from "../typechain-types";
+} from "../../constants";
+import * as Contracts from "../../typechain-types";
 
 const chainId: CHAINID = network.config.chainId ?? 0;
 console.log("chainId ", chainId);
