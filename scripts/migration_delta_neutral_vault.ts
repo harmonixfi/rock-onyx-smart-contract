@@ -1,12 +1,11 @@
 const { ethers, network } = require("hardhat");
-import axios from "axios";
 
-import * as Contracts from "../typechain-types";
 import {
   CHAINID
 } from "../constants";
 
 const chainId: CHAINID = network.config.chainId;
+console.log("chainId ", chainId);
 const privateKey = process.env.PRIVATE_KEY || "";
 const oldPrivateKey = process.env.OLD_PRIVATE_KEY || "";
 
@@ -18,7 +17,215 @@ async function main() {
 
     console.log("admin address %s", await admin.getAddress());
     const vaultAddress = "0x7E38b79D0645BE0D9539aec3501f6a8Fb6215392";
-    const oldContract = await ethers.getContractAt("RockOnyxDeltaNeutralVault", vaultAddress);
+    const exportABI = [
+      {
+        inputs: [],
+        name: "exportVaultState",
+        outputs: [
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                components: [
+                  {
+                    internalType: "uint256",
+                    name: "shares",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "depositAmount",
+                    type: "uint256",
+                  },
+                ],
+                internalType: "struct DepositReceipt",
+                name: "depositReceipt",
+                type: "tuple",
+              },
+            ],
+            internalType: "struct DepositReceiptArr[]",
+            name: "",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                components: [
+                  {
+                    internalType: "uint256",
+                    name: "shares",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "pps",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "profit",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "performanceFee",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "withdrawAmount",
+                    type: "uint256",
+                  },
+                ],
+                internalType: "struct Withdrawal",
+                name: "withdrawal",
+                type: "tuple",
+              },
+            ],
+            internalType: "struct WithdrawalArr[]",
+            name: "",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "uint8",
+                name: "decimals",
+                type: "uint8",
+              },
+              {
+                internalType: "address",
+                name: "asset",
+                type: "address",
+              },
+              {
+                internalType: "uint256",
+                name: "minimumSupply",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "cap",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "performanceFeeRate",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "managementFeeRate",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct VaultParams",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "performanceFeeAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "managementFeeAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "withdrawPoolAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "pendingDepositAmount",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "totalShares",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct VaultState",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "ethStakeLendRatio",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "perpDexRatio",
+                type: "uint256",
+              },
+              {
+                internalType: "uint8",
+                name: "decimals",
+                type: "uint8",
+              },
+            ],
+            internalType: "struct DeltaNeutralAllocateRatio",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "unAllocatedBalance",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "totalBalance",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct EthStakeLendState",
+            name: "",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "unAllocatedBalance",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "perpDexBalance",
+                type: "uint256",
+              },
+            ],
+            internalType: "struct PerpDexState",
+            name: "",
+            type: "tuple",
+          },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ];
+    const oldContract = new ethers.Contract(vaultAddress, exportABI, oldAdmin);
     
     const newVaultAddress = "";
     const newContract = await ethers.getContractAt("RockOnyxDeltaNeutralVault", newVaultAddress);
@@ -28,9 +235,13 @@ async function main() {
       .connect(oldAdmin)
       .exportVaultState();
   
-    console.log(exportVaultStateTx);
-    console.log(exportVaultStateTx[0][0][1]);
-    console.log(exportVaultStateTx[1][0][1]);
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("DeltaNeutralAllocateRatio %s", exportVaultStateTx[4]);
+    console.log("EthStakeLendState %s", exportVaultStateTx[5]);
+    console.log("PerpDexState %s", exportVaultStateTx[6]);
     
     console.log("-------------import vault state---------------");
     const _depositReceiptArr = exportVaultStateTx[0].map((element: any[][]) => {
@@ -63,11 +274,12 @@ async function main() {
       managementFeeRate: exportVaultStateTx[2][5],
     };
     const _vaultState = {
-      performanceFeeAmount: exportVaultStateTx[3][0],
-      managementFeeAmount: exportVaultStateTx[3][1],
       withdrawPoolAmount: exportVaultStateTx[3][2],
       pendingDepositAmount: exportVaultStateTx[3][3],
       totalShares: exportVaultStateTx[3][4],
+      totalFeePoolAmount: exportVaultStateTx[3][0] + exportVaultStateTx[3][1],
+      lastUpdateManagementFeeDate: (await ethers.provider.getBlock("latest"))
+        .timestamp,
     };
     const _allocateRatio = {
       ethStakeLendRatio: exportVaultStateTx[4][0],
@@ -90,19 +302,18 @@ async function main() {
         _withdrawalArr,
         _vaultParams,
         _vaultState,
-        _allocateRatio,
         _ethStakeLendState,
         _perpDexState
       );
-
     console.log("-------------export new vault state---------------");
-    exportVaultStateTx = await newContract
-      .connect(admin)
-      .exportVaultState();
-  
-    console.log(exportVaultStateTx);
-    console.log(exportVaultStateTx[0][0][1]);
-    console.log(exportVaultStateTx[1][0][1]);
+    exportVaultStateTx = await newContract.connect(admin).exportVaultState();
+
+    console.log("DepositReceiptArr %s", exportVaultStateTx[0]);
+    console.log("WithdrawalArr %s", exportVaultStateTx[1]);
+    console.log("VaultParams %s", exportVaultStateTx[2]);
+    console.log("VaultState %s", exportVaultStateTx[3]);
+    console.log("EthStakeLendState %s", exportVaultStateTx[4]);
+    console.log("PerpDexState %s", exportVaultStateTx[5]);
   }
 main().catch((error) => {
   console.error(error);
