@@ -17,53 +17,50 @@ async function main() {
   const oldAdmin = new ethers.Wallet(oldPrivateKey, ethers.provider);
   const oldVaultAddress = "0xC9A079d7d1CF510a6dBa8dA8494745beaE7736E2";
   const oldContract = await ethers.getContractAt(
-    "KelpRestakingDeltaNeutralVault",
+    "DeltaNeutralVault",
     oldVaultAddress
   );
 
-  const newVaultAddress = "0x389b5702FA8bF92759d676036d1a90516C1ce0C4";
+  const newVaultAddress = "0xd531d9212cB1f9d27F9239345186A6e9712D8876";
 
   // Connect to the USDC contract
   const usdcContract = await ethers.getContractAt("IERC20", usdcAddress);
   const wstEthContract = await ethers.getContractAt("IERC20", wstETHAddress);
 
-  console.log("-------------Transfer USDC ---------------");
-  let totalUSDC = await usdcContract.balanceOf(
-    await oldContract.getAddress()
-  );
-  console.log(
-    "USDC balance of %s %s",
-    await oldContract.getAddress(),
-    totalUSDC
-  );
-
-  // TEST 10 USDC FIRST
-  totalUSDC = BigInt(10 * 1e6);
-
-  await oldContract
-    .connect(oldAdmin)
-    .emergencyShutdown(newVaultAddress, usdcAddress, totalUSDC);
-
-  let newVaultBalance = await usdcContract.balanceOf(newVaultAddress);
-  console.log("USDC balance of newVaultAddress: %s", newVaultBalance);
-
-  // const totalWstEth = await wstEthContract.balanceOf(
+  // console.log("-------------Transfer USDC ---------------");
+  // let totalUSDC = await usdcContract.balanceOf(
   //   await oldContract.getAddress()
   // );
   // console.log(
-  //   "wstETH balance of %s %s",
+  //   "USDC balance of %s %s",
   //   await oldContract.getAddress(),
-  //   totalWstEth
+  //   totalUSDC
   // );
-
-  // console.log("-------------Transfer wstETH ---------------");
 
   // await oldContract
   //   .connect(oldAdmin)
-  //   .emergencyShutdown(newVaultAddress, wstEthContract, totalWstEth);
+  //   .emergencyShutdown(newVaultAddress, usdcAddress, totalUSDC);
 
-  // newVaultBalance = await totalWstEth.balanceOf(newVaultAddress);
-  // console.log("wstETH balance of newVaultAddress: %s", newVaultBalance);
+  // let newVaultBalance = await usdcContract.balanceOf(newVaultAddress);
+  // console.log("USDC balance of newVaultAddress: %s", newVaultBalance);
+
+  const totalWstEth = await wstEthContract.balanceOf(
+    await oldContract.getAddress()
+  );
+  console.log(
+    "wstETH balance of %s %s",
+    await oldContract.getAddress(),
+    totalWstEth
+  );
+
+  console.log("-------------Transfer wstETH ---------------");
+  
+  await oldContract
+    .connect(oldAdmin)
+    .emergencyShutdown(newVaultAddress, wstETHAddress, totalWstEth);
+
+  let newVaultBalance = await wstEthContract.balanceOf(newVaultAddress);
+  console.log("wstETH balance of newVaultAddress: %s", newVaultBalance);
 }
 
 main().catch((error) => {

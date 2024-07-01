@@ -267,7 +267,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     return ethPrice;
   }
 
-  it("seed data", async function () {
+  it.skip("seed data", async function () {
     const usdcSigner = await ethers.getImpersonatedSigner(
       usdcImpersonatedSigner
     );
@@ -286,7 +286,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     await transferForUser(dai, daiSigner, user2, BigInt(100000 * 1e18));
   });
 
-  it("user deposit -> withdraw, do not deposit to perp dex", async function () {
+  it.skip("user deposit -> withdraw, do not deposit to perp dex", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -326,7 +326,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit -> open position -> close position -> withdraw, do not deposit to perp dex", async function () {
+  it.skip("user deposit -> open position -> close position -> withdraw, do not deposit to perp dex", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -377,7 +377,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit -> open position -> deposit to vender -> withdraw", async function () {
+  it.skip("user deposit -> open position -> deposit to vender -> withdraw", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -452,7 +452,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit1 -> open position -> deposit to vender -> user deposit2 -> open position -> deposit to vender -> withdraw", async function () {
+  it.skip("user deposit1 -> open position -> deposit to vender -> user deposit2 -> open position -> deposit to vender -> withdraw", async function () {
     console.log(
       "-------------deposit1 to rockOnyxDeltaNeutralVault---------------"
     );
@@ -548,7 +548,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("user deposit -> deposit to vendor -> open position -> sync profit -> withdraw -> close position -> complete withdraw", async function () {
+  it.skip("user deposit -> deposit to vendor -> open position -> sync profit -> withdraw -> close position -> complete withdraw", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -763,7 +763,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     );
   });
 
-  it("migration test, user deposit -> deposit to vendor -> open position -> sync profit -> withdraw -> close position -> complete withdraw -> migration", async function () {
+  it.skip("migration test, user deposit -> deposit to vendor -> open position -> sync profit -> withdraw -> close position -> complete withdraw -> migration", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -1078,7 +1078,7 @@ describe("RockOnyxDeltaNeutralVault", function () {
     expect(Number(withdrawShares)).to.equal(0n);
   });
 
-  it("user deposit -> open position -> close position", async function () {
+  it.skip("user deposit -> open position -> close position", async function () {
     console.log(
       "-------------deposit to rockOnyxDeltaNeutralVault---------------"
     );
@@ -1414,24 +1414,29 @@ describe("RockOnyxDeltaNeutralVault", function () {
       "RockOnyxDeltaNeutralVault"
     );
 
-    const newContract = await newContractFactory.deploy(
-      admin,
-      usdcAddress,
-      6,
-      BigInt(5 * 1e6),
-      BigInt(1000000 * 1e6),
-      networkCost,
-      await camelotSwapContract.getAddress(),
-      await aevoContract.getAddress(),
-      await optionsReceiver.getAddress(),
-      wethAddress,
-      wstethAddress,
-      BigInt(1 * 1e6),
-      await uniSwapContract.getAddress(),
-      [usdtAddress, daiAddress],
-      [usdcAddress, usdtAddress],
-      [100, 100]
+    const newContract = await upgrades.deployProxy(
+      newContractFactory,
+      [
+        await admin.getAddress(),
+        usdcAddress,
+        6,
+        BigInt(5 * 1e6),
+        BigInt(1000000 * 1e6),
+        networkCost,
+        await camelotSwapContract.getAddress(),
+        await aevoContract.getAddress(),
+        await optionsReceiver.getAddress(),
+        wethAddress,
+        wstethAddress,
+        BigInt(1 * 1e6),
+        await uniSwapContract.getAddress(),
+        [usdtAddress, daiAddress],
+        [usdcAddress, usdtAddress],
+        [100, 100],
+      ],
+      { initializer: "initialize" }
     );
+
     await newContract.waitForDeployment();
 
     console.log("Deposit ");

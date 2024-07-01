@@ -72,7 +72,7 @@ async function deployCamelotSwapContract() {
     await camelotSwapContract.getAddress()
   );
 }
-const UPGRADEABLE_PROXY = "";
+const UPGRADEABLE_PROXY = "0xd531d9212cB1f9d27F9239345186A6e9712D8876";
 
 async function deployVault() {
   const camelotSwapAddress = CAMELOT_SWAP_ADDRESS[chainId] || AddressZero;
@@ -85,7 +85,7 @@ async function deployVault() {
   // const camelotSwapAddress = await camelotSwapContract.getAddress();
 
   const rockOnyxDeltaNeutralVault = await ethers.getContractFactory(
-    "DeltaNeutralVault"
+    "RockOnyxDeltaNeutralVault"
   );
 
   rockOnyxDeltaNeutralVaultContract = await upgrades.deployProxy(
@@ -128,7 +128,7 @@ async function deployVault() {
 
 async function upgradeProxy() {
   const deltaNeutralVault = await ethers.getContractFactory(
-    "DeltaNeutralVault"
+    "RockOnyxDeltaNeutralVault"
   );
   console.log("Upgrading V1Contract...");
   let upgrade = await upgrades.upgradeProxy(
@@ -155,8 +155,8 @@ async function main() {
     await deployer.getAddress()
   );
 
-  await deployVault();
-  // await upgradeProxy();
+  // await deployVault();
+  await upgradeProxy();
 }
 
 main()

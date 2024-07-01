@@ -661,6 +661,563 @@
             "label": "swapProxy",
             "offset": 1,
             "slot": "2",
+            "type": "t_contract(UniSwap)4554",
+            "contract": "BaseSwapVault",
+            "src": "contracts/extensions/RockOnyx/BaseSwapVault.sol:8"
+          },
+          {
+            "label": "fees",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint24))",
+            "contract": "BaseSwapVault",
+            "src": "contracts/extensions/RockOnyx/BaseSwapVault.sol:9"
+          },
+          {
+            "label": "ethSwapProxy",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(ISwapProxy)5008",
+            "contract": "RockOnyxEthStakeLendStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxEthStakeLendStrategy.sol:24"
+          },
+          {
+            "label": "usd",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_address",
+            "contract": "RockOnyxEthStakeLendStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxEthStakeLendStrategy.sol:26"
+          },
+          {
+            "label": "weth",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_address",
+            "contract": "RockOnyxEthStakeLendStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxEthStakeLendStrategy.sol:27"
+          },
+          {
+            "label": "wstEth",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_address",
+            "contract": "RockOnyxEthStakeLendStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxEthStakeLendStrategy.sol:28"
+          },
+          {
+            "label": "ethStakeLendState",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_struct(EthStakeLendState)8947_storage",
+            "contract": "RockOnyxEthStakeLendStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxEthStakeLendStrategy.sol:30"
+          },
+          {
+            "label": "perpDexStrategyUsdc",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_address",
+            "contract": "RockOnyxPerpDexStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxPerpDexStrategy.sol:16"
+          },
+          {
+            "label": "perpDexStrategyUsdce",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_address",
+            "contract": "RockOnyxPerpDexStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxPerpDexStrategy.sol:17"
+          },
+          {
+            "label": "optionsReceiver",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_address",
+            "contract": "RockOnyxPerpDexStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxPerpDexStrategy.sol:18"
+          },
+          {
+            "label": "perpDexVendor",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_contract(IOptionsVendorProxy)4852",
+            "contract": "RockOnyxPerpDexStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxPerpDexStrategy.sol:19"
+          },
+          {
+            "label": "perpDexState",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_struct(PerpDexState)8942_storage",
+            "contract": "RockOnyxPerpDexStrategy",
+            "src": "contracts/vaults/deltaNeutral/strategies/RockOnyxPerpDexStrategy.sol:20"
+          },
+          {
+            "label": "initialPPS",
+            "offset": 0,
+            "slot": "16",
+            "type": "t_uint256",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:21"
+          },
+          {
+            "label": "networkCost",
+            "offset": 0,
+            "slot": "17",
+            "type": "t_uint256",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:25"
+          },
+          {
+            "label": "depositReceipts",
+            "offset": 0,
+            "slot": "18",
+            "type": "t_mapping(t_address,t_struct(DepositReceipt)8902_storage)",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:26"
+          },
+          {
+            "label": "withdrawals",
+            "offset": 0,
+            "slot": "19",
+            "type": "t_mapping(t_address,t_struct(Withdrawal)8913_storage)",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:27"
+          },
+          {
+            "label": "vaultParams",
+            "offset": 0,
+            "slot": "20",
+            "type": "t_struct(VaultParams)8926_storage",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:28"
+          },
+          {
+            "label": "vaultState",
+            "offset": 0,
+            "slot": "25",
+            "type": "t_struct(VaultState)8937_storage",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:29"
+          },
+          {
+            "label": "depositReceiptArr",
+            "offset": 0,
+            "slot": "30",
+            "type": "t_array(t_struct(DepositReceiptArr)8953_storage)dyn_storage",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:33"
+          },
+          {
+            "label": "withdrawalArr",
+            "offset": 0,
+            "slot": "31",
+            "type": "t_array(t_struct(WithdrawalArr)8959_storage)dyn_storage",
+            "contract": "RockOnyxDeltaNeutralVault",
+            "src": "contracts/vaults/deltaNeutral/RockOnyxDeltaNeutralVault.sol:34"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)10_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)67_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(DepositReceiptArr)8953_storage)dyn_storage": {
+            "label": "struct DepositReceiptArr[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(WithdrawalArr)8959_storage)dyn_storage": {
+            "label": "struct WithdrawalArr[]",
+            "numberOfBytes": "32"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IOptionsVendorProxy)4852": {
+            "label": "contract IOptionsVendorProxy",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISwapProxy)5008": {
+            "label": "contract ISwapProxy",
+            "numberOfBytes": "20"
+          },
+          "t_contract(UniSwap)4554": {
+            "label": "contract UniSwap",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint24))": {
+            "label": "mapping(address => mapping(address => uint24))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(DepositReceipt)8902_storage)": {
+            "label": "mapping(address => struct DepositReceipt)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Withdrawal)8913_storage)": {
+            "label": "mapping(address => struct Withdrawal)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint24)": {
+            "label": "mapping(address => uint24)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_string_storage)": {
+            "label": "mapping(bytes32 => string)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)404_storage)": {
+            "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(DepositReceipt)8902_storage": {
+            "label": "struct DepositReceipt",
+            "members": [
+              {
+                "label": "shares",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "depositAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(DepositReceiptArr)8953_storage": {
+            "label": "struct DepositReceiptArr",
+            "members": [
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "depositReceipt",
+                "type": "t_struct(DepositReceipt)8902_storage",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(EthStakeLendState)8947_storage": {
+            "label": "struct EthStakeLendState",
+            "members": [
+              {
+                "label": "unAllocatedBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(PerpDexState)8942_storage": {
+            "label": "struct PerpDexState",
+            "members": [
+              {
+                "label": "unAllocatedBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "perpDexBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(RoleData)404_storage": {
+            "label": "struct AccessControl.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(VaultParams)8926_storage": {
+            "label": "struct VaultParams",
+            "members": [
+              {
+                "label": "decimals",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "asset",
+                "type": "t_address",
+                "offset": 1,
+                "slot": "0"
+              },
+              {
+                "label": "minimumSupply",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "cap",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "performanceFeeRate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "managementFeeRate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_struct(VaultState)8937_storage": {
+            "label": "struct VaultState",
+            "members": [
+              {
+                "label": "withdrawPoolAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "pendingDepositAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "totalShares",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "totalFeePoolAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "lastUpdateManagementFeeDate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_struct(Withdrawal)8913_storage": {
+            "label": "struct Withdrawal",
+            "members": [
+              {
+                "label": "shares",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "pps",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "profit",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "performanceFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "withdrawAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_struct(WithdrawalArr)8959_storage": {
+            "label": "struct WithdrawalArr",
+            "members": [
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "withdrawal",
+                "type": "t_struct(Withdrawal)8913_storage",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint24": {
+            "label": "uint24",
+            "numberOfBytes": "3"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "25436315aa175e1d6e2543c51347e1f10892e6dc8f051a4b7df5cb0441d3ed5f": {
+      "address": "0x9Acae6467E73095c3d00a881fb4D98fd2b3bCFa6",
+      "txHash": "0x5b481d55124ea85decd8372c4915bbe621290d9e336a52b3fc6b006a115e3995",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)404_storage)",
+            "contract": "AccessControl",
+            "src": "@openzeppelin/contracts/access/AccessControl.sol:55"
+          },
+          {
+            "label": "errors",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_bytes32,t_string_storage)",
+            "contract": "RockOnyxAccessControl",
+            "src": "contracts/extensions/RockOnyxAccessControl.sol:14"
+          },
+          {
+            "label": "paused",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_bool",
+            "contract": "RockOnyxAccessControl",
+            "src": "contracts/extensions/RockOnyxAccessControl.sol:16"
+          },
+          {
+            "label": "swapProxy",
+            "offset": 1,
+            "slot": "2",
             "type": "t_contract(UniSwap)2932",
             "contract": "BaseSwapVault",
             "src": "contracts/extensions/RockOnyx/BaseSwapVault.sol:8"
@@ -865,11 +1422,11 @@
             "label": "address",
             "numberOfBytes": "20"
           },
-          "t_array(t_struct(DepositReceiptArr)6998_storage)dyn_storage": {
+          "t_array(t_struct(DepositReceiptArr)7006_storage)dyn_storage": {
             "label": "struct DepositReceiptArr[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(WithdrawalArr)7004_storage)dyn_storage": {
+          "t_array(t_struct(WithdrawalArr)7012_storage)dyn_storage": {
             "label": "struct WithdrawalArr[]",
             "numberOfBytes": "32"
           },
@@ -897,11 +1454,11 @@
             "label": "mapping(address => mapping(address => uint24))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(DepositReceipt)6947_storage)": {
+          "t_mapping(t_address,t_struct(DepositReceipt)6955_storage)": {
             "label": "mapping(address => struct DepositReceipt)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(Withdrawal)6958_storage)": {
+          "t_mapping(t_address,t_struct(Withdrawal)6966_storage)": {
             "label": "mapping(address => struct Withdrawal)",
             "numberOfBytes": "32"
           },
@@ -921,7 +1478,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(DepositReceipt)6947_storage": {
+          "t_struct(DepositReceipt)6955_storage": {
             "label": "struct DepositReceipt",
             "members": [
               {
@@ -939,7 +1496,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(DepositReceiptArr)6998_storage": {
+          "t_struct(DepositReceiptArr)7006_storage": {
             "label": "struct DepositReceiptArr",
             "members": [
               {
@@ -950,14 +1507,14 @@
               },
               {
                 "label": "depositReceipt",
-                "type": "t_struct(DepositReceipt)6947_storage",
+                "type": "t_struct(DepositReceipt)6955_storage",
                 "offset": 0,
                 "slot": "1"
               }
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(EthStakeLendState)6992_storage": {
+          "t_struct(EthStakeLendState)7000_storage": {
             "label": "struct EthStakeLendState",
             "members": [
               {
@@ -975,7 +1532,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(PerpDexState)6987_storage": {
+          "t_struct(PerpDexState)6995_storage": {
             "label": "struct PerpDexState",
             "members": [
               {
@@ -1011,7 +1568,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(VaultParams)6971_storage": {
+          "t_struct(VaultParams)6979_storage": {
             "label": "struct VaultParams",
             "members": [
               {
@@ -1053,7 +1610,7 @@
             ],
             "numberOfBytes": "160"
           },
-          "t_struct(VaultState)6982_storage": {
+          "t_struct(VaultState)6990_storage": {
             "label": "struct VaultState",
             "members": [
               {
@@ -1089,7 +1646,7 @@
             ],
             "numberOfBytes": "160"
           },
-          "t_struct(Withdrawal)6958_storage": {
+          "t_struct(Withdrawal)6966_storage": {
             "label": "struct Withdrawal",
             "members": [
               {
@@ -1125,7 +1682,7 @@
             ],
             "numberOfBytes": "160"
           },
-          "t_struct(WithdrawalArr)7004_storage": {
+          "t_struct(WithdrawalArr)7012_storage": {
             "label": "struct WithdrawalArr",
             "members": [
               {
@@ -1136,7 +1693,7 @@
               },
               {
                 "label": "withdrawal",
-                "type": "t_struct(Withdrawal)6958_storage",
+                "type": "t_struct(Withdrawal)6966_storage",
                 "offset": 0,
                 "slot": "1"
               }

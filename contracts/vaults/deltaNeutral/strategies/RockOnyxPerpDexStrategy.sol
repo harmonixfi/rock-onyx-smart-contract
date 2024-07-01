@@ -10,7 +10,7 @@ import "../../../interfaces/IOptionsVendorProxy.sol";
 import "../structs/DeltaNeutralStruct.sol";
 import "hardhat/console.sol";
 
-contract PerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
+contract RockOnyxPerpDexStrategy is RockOnyxAccessControl, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     address perpDexStrategyUsdc;

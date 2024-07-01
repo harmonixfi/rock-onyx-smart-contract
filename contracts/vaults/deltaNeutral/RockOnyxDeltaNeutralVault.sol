@@ -6,17 +6,17 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import "../../extensions/RockOnyxAccessControl.sol";
 import "../../extensions/RockOnyx/BaseSwapVault.sol";
 import "../../lib/ShareMath.sol";
-import "./strategies/EthStakeLendStrategy.sol";
-import "./strategies/PerpDexStrategy.sol";
+import "./strategies/RockOnyxEthStakeLendStrategy.sol";
+import "./strategies/RockOnyxPerpDexStrategy.sol";
 import "./structs/DeltaNeutralStruct.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract DeltaNeutralVault is
+contract RockOnyxDeltaNeutralVault is
     Initializable,
     BaseSwapVault,
-    EthStakeLendStrategy,
-    PerpDexStrategy
+    RockOnyxEthStakeLendStrategy,
+    RockOnyxPerpDexStrategy
 {
     uint256 private initialPPS;
     using ShareMath for uint256;
@@ -569,4 +569,8 @@ contract DeltaNeutralVault is
         perpDexState = _perpDexState;
     }
     // end migration
+
+    function version() public view returns (uint8) {
+        return 1;
+    }
 }
