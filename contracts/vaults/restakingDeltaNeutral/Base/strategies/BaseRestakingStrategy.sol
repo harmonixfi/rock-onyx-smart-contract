@@ -73,7 +73,6 @@ abstract contract BaseRestakingStrategy is BaseSwapVault, RockOnyxAccessControl,
     function closePosition(uint256 ethAmount) external nonReentrant {
         _auth(ROCK_ONYX_OPTIONS_TRADER_ROLE);
 
-        console.log("closePosition");
         withdrawFromRestakingProxy(ethAmount);
         ethToken.approve(address(swapProxy), ethToken.balanceOf(address(this)));
         uint256 actualUsdcAmount = swapProxy.swapTo(
