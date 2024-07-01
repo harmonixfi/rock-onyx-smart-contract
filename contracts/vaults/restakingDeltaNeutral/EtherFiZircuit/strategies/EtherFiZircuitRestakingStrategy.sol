@@ -53,7 +53,7 @@ contract EtherFiZircuitRestakingStrategy is BaseRestakingStrategy {
             restakingTokenAmount += zircuitRestakeProxy.balance(address(restakingToken), address(this));
         }
 
-        uint256 ethAmount = restakingTokenAmount * swapProxy.getPriceOf(address(restakingToken), address(ethToken));
+        uint256 ethAmount = restakingTokenAmount * swapProxy.getPriceOf(address(restakingToken), address(ethToken)) / 1e18;
         restakingState.totalBalance = restakingState.unAllocatedBalance + ethAmount * swapProxy.getPriceOf(address(ethToken), address(usdcToken)) / 1e18;
     }
 

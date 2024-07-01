@@ -13,6 +13,7 @@ import {
     AEVO_CONNECTOR_ADDRESS,
     USDC_IMPERSONATED_SIGNER_ADDRESS,
     USDT_IMPERSONATED_SIGNER_ADDRESS,
+    DAI_IMPERSONATED_SIGNER_ADDRESS,
     ETH_PRICE_FEED_ADDRESS,
     USDT_PRICE_FEED_ADDRESS,
     DAI_PRICE_FEED_ADDRESS,
@@ -28,6 +29,7 @@ import { BigNumberish, Signer } from 'ethers';
 const chainId: CHAINID = network.config.chainId;
 console.log('chainId ', chainId);
 let aevoRecipientAddress: string;
+const ETH_AMOUNT = ethers.parseEther('1');
 const PRECISION = 2 * 1e6;
 
 describe('EtherFiRestakingDeltaNeutralVault', () => {
@@ -38,11 +40,14 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         user4: Signer;
 
     let etherfiRestakingDNVault: Contracts.EtherFiRestakingDeltaNeutralVault;
+    let etherfiRestakingStrategy: Contracts.EtherFiZircuitRestakingStrategy;
     let usdc: Contracts.IERC20;
     let usdt: Contracts.IERC20;
+    let dai: Contracts.IERC20;
 
     const usdcImpersonatedSigner = USDC_IMPERSONATED_SIGNER_ADDRESS[chainId];
     const usdtImpersonatedSigner = USDT_IMPERSONATED_SIGNER_ADDRESS[chainId];
+    const daiImpersonatedSigner = DAI_IMPERSONATED_SIGNER_ADDRESS[chainId];
     const usdcAddress = USDC_ADDRESS[chainId] || '';
     const usdtAddress = USDT_ADDRESS[chainId] || '';
     const daiAddress = DAI_ADDRESS[chainId] || '';
@@ -98,13 +103,12 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
 
     async function deployEtherFiRestakingDeltaNeutralVault() {
         const etherFiRestakingDeltaNeutralVault =
-        await ethers.getContractFactory(
-            'EtherFiRestakingDeltaNeutralVault'
-        );
+            await ethers.getContractFactory(
+                'EtherFiRestakingDeltaNeutralVault'
+            );
 
-        etherfiRestakingDNVault = await upgrades.deployProxy(
-            etherFiRestakingDeltaNeutralVault,
-            [
+        etherfiRestakingDNVault =
+            await etherFiRestakingDeltaNeutralVault.deploy(
                 admin,
                 usdcAddress,
                 6,
@@ -124,9 +128,7 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
                 [wethAddress, wethAddress, usdcAddress, usdtAddress],
                 [500, 500, 100, 100],
                 chainId
-            ],
-            { initializer: "initialize" }
-        );
+            );
 
         await etherfiRestakingDNVault.waitForDeployment();
 
@@ -136,11 +138,26 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         );
     }
 
+    async function deployEtherFiRestakingStrategy() {
+        const etherFiZircuitRestakingStrategy = await ethers.getContractFactory(
+            'EtherFiZircuitRestakingStrategy'
+        );
+
+        etherfiRestakingStrategy = await etherFiZircuitRestakingStrategy.deploy();
+        await etherfiRestakingStrategy.waitForDeployment();
+
+        console.log(
+            'deploy etherfiRestakingStrategy successfully: %s',
+            await etherfiRestakingStrategy.getAddress()
+        );
+    }
+
     beforeEach(async function () {
         [admin, user1, user2, user3, user4] = await ethers.getSigners();
         aevoRecipientAddress = await user4.getAddress();
         usdc = await ethers.getContractAt('IERC20', usdcAddress);
         usdt = await ethers.getContractAt('IERC20', usdtAddress);
+        dai = await ethers.getContractAt('IERC20', daiAddress);
 
         await deployPriceConsumerContract();
         await deployUniSwapContract();
@@ -182,7 +199,6 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         return totalValueLocked;
     }
 
-
     it("seed data", async () => {
         const usdcSigner = await ethers.getImpersonatedSigner(
             usdcImpersonatedSigner
@@ -190,19 +206,23 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         const usdtSigner = await ethers.getImpersonatedSigner(
             usdtImpersonatedSigner
         );
+        const daiSigner = await ethers.getImpersonatedSigner(
+            daiImpersonatedSigner
+        );
 
         await transferForUser(usdc, usdcSigner, user1, 100000 * 1e6);
         await transferForUser(usdc, usdcSigner, user2, 100000 * 1e6);
         await transferForUser(usdc, usdcSigner, user3, 100000 * 1e6);
         await transferForUser(usdc, usdcSigner, user4, 100000 * 1e6);
         await transferForUser(usdc, usdcSigner, admin, 100000 * 1e6);
-
         await transferForUser(usdt, usdtSigner, user2, 100000 * 1e6);
+        await transferForUser(dai, daiSigner, user2, 100000 * 1e6);
     });
 
     it.skip("deposit to zircuit", async () => {
         await deposit(user1, 10 * 1e6, usdc, usdc);
-        await deposit(user2, 100 * 1e6, usdc, usdc);
+        await deposit(user2, 50 * 1e6, usdt, usdt);
+        await deposit(user2, 50 * 1e6, dai, usdt);
 
         let totalValueLock = await logAndReturnTotalValueLock();
         expect(totalValueLock).to.approximately(110 * 1e6, PRECISION);
@@ -241,12 +261,6 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
           .connect(admin)
           .syncBalance(150 * 1e6);
         await syncBalanceTx.wait();
-
-        console.log("-------------sync restaking balance---------------");
-        const syncBalanceTx1 = await etherfiRestakingDNVault
-          .connect(admin)
-          .syncBalance(150 * 1e6);
-        await syncBalanceTx1.wait();
     
         console.log("-------------close position---------------");
         const closePositionTx = await etherfiRestakingDNVault
@@ -269,6 +283,9 @@ describe('EtherFiRestakingDeltaNeutralVault', () => {
         await handlePostWithdrawTx.wait();
     
         console.log("-------------handleWithdrawalFunds---------------");
+        const handleWithdrawalFundsTx = await etherfiRestakingDNVault
+          .connect(admin)
+          .acquireWithdrawalFunds(100 * 1e6);
         await initiateWithdrawalTx1.wait();
     
         console.log("-------------complete withdrawals---------------");
