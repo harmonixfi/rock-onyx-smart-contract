@@ -14,8 +14,11 @@ import {
   PRICE_CONSUMER_ADDRESS,
   UNI_SWAP_ADDRESS,
   NETWORK_COST,
-} from "../constants";
-import * as Contracts from "../typechain-types";
+  CAMELOT_SWAP_ADDRESS,
+  AddressZero
+} from "../../constants";
+import * as Contracts from "../../typechain-types";
+import { Signer } from "ethers";
 
 const chainId: CHAINID = network.config.chainId ?? 0;
 
@@ -32,6 +35,7 @@ const admin = "0x7E38b79D0645BE0D9539aec3501f6a8Fb6215392";
 
 let aevoContract: Contracts.Aevo;
 let rockOnyxDeltaNeutralVaultContract: Contracts.RockOnyxDeltaNeutralVault;
+let deployer: Signer;
 
 async function deployAevoContract() {
   const factory = await ethers.getContractFactory("Aevo");
@@ -68,16 +72,10 @@ async function deployCamelotSwapContract() {
     await camelotSwapContract.getAddress()
   );
 }
+const UPGRADEABLE_PROXY = "0xd531d9212cB1f9d27F9239345186A6e9712D8876";
 
-async function main() {
-  const [deployer] = await ethers.getSigners();
-
-  console.log(
-    "Deploying contracts with the account:",
-    await deployer.getAddress()
-  );
-
-  const camelotSwapAddress = "0x5c2fEC58221daC4d3945Dd4Ac7a956d6C965ba1c";
+async function deployVault() {
+  const camelotSwapAddress = CAMELOT_SWAP_ADDRESS[chainId] || AddressZero;
   const aevoAddress = "0x3D75e9366Fe5A2f1B7481a4Fb05deC21f8038467";
 
   // MAINNET
@@ -126,6 +124,39 @@ async function main() {
     "Delta Neutral implementation address: %s",
     implementationAddress
   );
+}
+
+async function upgradeProxy() {
+  const deltaNeutralVault = await ethers.getContractFactory(
+    "RockOnyxDeltaNeutralVault"
+  );
+  console.log("Upgrading V1Contract...");
+  let upgrade = await upgrades.upgradeProxy(
+    UPGRADEABLE_PROXY,
+    deltaNeutralVault
+  );
+  console.log("V1 Upgraded to V2");
+  console.log("V2 Contract Deployed To:", await upgrade.getAddress());
+
+  // Print the implementation address
+  const implementationAddress =
+    await upgrades.erc1967.getImplementationAddress(UPGRADEABLE_PROXY);
+  console.log(
+    "KelpRestakingDNVault implementation address: %s",
+    implementationAddress
+  );
+}
+
+async function main() {
+  [deployer] = await ethers.getSigners();
+
+  console.log(
+    "Deploying contracts with the account:",
+    await deployer.getAddress()
+  );
+
+  // await deployVault();
+  await upgradeProxy();
 }
 
 main()

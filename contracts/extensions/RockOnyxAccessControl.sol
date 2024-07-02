@@ -15,7 +15,7 @@ contract RockOnyxAccessControl is AccessControl {
 
     bool internal paused;
 
-    function accessControl_Initialize() public {
+    function accessControl_Initialize() internal {
         errors[LIDO_STAKE_ROLE] = "LIDO_STAKE_ROLE_ERROR";
         errors[ROCK_ONYX_ADMIN_ROLE] = "ROCK_ONYX_ADMIN_ROLE_ERROR";
         errors[
